@@ -1,0 +1,21 @@
+{
+	"name": "backend",
+	"private": true,
+	"version": "0.0.0",
+	"scripts": {
+		"build": "esbuild app.ts --bundle --outfile=dist/app.js --platform=node --format=cjs",
+		"dev": "nodemon --watch 'src/**/*.ts' --exec 'tsx app.ts'",
+		"typecheck": "tsc -p tsconfig.json"
+	},
+	"dependencies": {
+		"express": "^4.21.2"
+	},
+	"devDependencies": {
+		"@types/express": "^5.0.1",
+		"@types/node": "^22.13.11",
+		"esbuild": "^0.25.1",
+		"nodemon": "^3.1.9",
+		"tsx": "^4.19.3",
+		"typescript": "^5.8.2"
+	}
+}

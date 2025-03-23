@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "rootDir": "./", //or "./src"
+    "target": "esnext",
+    "module": "esnext", // Or "commonjs", depending on your backend's needs
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [ "./frontend/src/*" ], //Frontend specific
+      "%/*": [ "./shared/src/*" ], //Shared code
+      "#/*": [ "./backend/src/*" ] //Backend Specific
+    },
+    "composite": true // Enable project references
+    // "declaration": true, //Generate declaration files
+    // "declarationMap": true
+  },
+  "include": [ "app.ts", "src/**/*" ],
+  "exclude": [
+    "node_modules"
+  ]
+}
+

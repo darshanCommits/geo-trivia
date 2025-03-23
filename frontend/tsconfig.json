@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "target": "es6",
+    "module": "esnext",
+    "moduleResolution": "node",
+    "composite": true,
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "types": [ "vite/client" ],
+    "noEmit": true,
+    "incremental": true
+  },
+  "include": [ "./src/**/*", "./*.d.ts", "../shared/**/*.ts" ],
+  "exclude": [ "node_modules" ]
+}
