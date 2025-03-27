@@ -4,13 +4,13 @@ import { questions } from "../data/questions";
 class QuestionService {
 	private currentIndex = 0;
 
-	getNextQuestion(): QuestionType | string {
+	getNextQuestion(): QuestionType {
 		if (this.currentIndex < questions.length) {
 			const question = questions[this.currentIndex];
 			this.currentIndex++;
 			return question;
 		}
-		return "finished";
+		return null;
 	}
 
 	resetQuestions(): void {
