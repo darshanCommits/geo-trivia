@@ -1,172 +1,153 @@
 import type { QuestionType } from "%/types";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
+import { useQuery } from "@tanstack/react-query";
 import Question from "./Question";
+import GameOver from "./components/gameOver";
+import Header from "./components/header";
+import Loading from "./components/loading";
+import ProgressBar from "./components/progressBar";
+
+// Fetch a single question from the /next endpoint.
+// Returns a question object or null if there are no more questions.
+const fetchNextQuestion = async (): Promise<QuestionType> => {
+  const response = await fetch("http://localhost:3000/next");
+  if (!response.ok) {
+    throw new Error("Failed to fetch next question");
+  }
+  return response.json();
+};
+
+// Game state type
+type GameState = {
+  questionCount: number;
+  score: number;
+  gameOver: boolean;
+};
+
+// Game action type
+type GameAction =
+  | { type: "ANSWER_QUESTION"; payload: boolean }
+  | { type: "GAME_OVER" }
+  | { type: "RESET_GAME" };
+
+// Initial game state
+const initialGameState: GameState = {
+  questionCount: 0,
+  score: 0,
+  gameOver: false,
+};
+
+// Game reducer
+function gameReducer(state: GameState, action: GameAction): GameState {
+  switch (action.type) {
+    case "ANSWER_QUESTION":
+      return {
+        ...state,
+        questionCount: state.questionCount + 1,
+        score: action.payload ? state.score + 1 : state.score,
+      };
+    case "GAME_OVER":
+      return { ...state, gameOver: true };
+    case "RESET_GAME":
+      return initialGameState;
+    default:
+      return state;
+  }
+}
 
 /**
  * Main Trivia Game application component
  */
 function App() {
-	const [questions, setQuestions] = useState<QuestionType[]>([]);
-	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-	const [score, setScore] = useState(0);
-	const [gameOver, setGameOver] = useState(false);
-	const [isLoading, setIsLoading] = useState(true);
+  // Use React Query to fetch a single question from /next.
+  // The query is disabled initially so that we can control when to fetch.
+  const {
+    data: currentQuestion,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<QuestionType, Error>({
+    queryKey: ["question"],
+    queryFn: fetchNextQuestion,
+    enabled: false,
+  });
 
-	useEffect(() => {
-		(async () => {
-			try {
-				setIsLoading(true);
-				const response = await fetch("http://localhost:3000");
-				const data: QuestionType[] = await response.json();
-				setQuestions(data);
-			} catch (error) {
-				console.error("Error loading questions:", error);
-			} finally {
-				setIsLoading(false);
-			}
-		})();
-	}, []);
+  const [state, dispatch] = useReducer(gameReducer, initialGameState);
+  const { questionCount, score, gameOver } = state;
 
-	/**
-	 * Handles player's answer, updates score, and moves to next question
-	 */
-	const handleAnswer = (isCorrect: boolean): void => {
-		if (isCorrect) {
-			setScore((prevScore) => prevScore + 1);
-		}
+  // On mount, fetch the first question.
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
-		const nextQuestionIndex = currentQuestionIndex + 1;
-		if (nextQuestionIndex < questions.length) {
-			setCurrentQuestionIndex(nextQuestionIndex);
-		} else {
-			setGameOver(true);
-		}
-	};
+  const handleAnswer = async (isCorrect: boolean): Promise<void> => {
+    // If there's no current question, end the game.
+    if (!currentQuestion) {
+      dispatch({ type: "GAME_OVER" });
+      return;
+    }
 
-	/**
-	 * Resets the game state to start a new game
-	 */
-	const resetGame = (): void => {
-		setCurrentQuestionIndex(0);
-		setScore(0);
-		setGameOver(false);
-	};
+    dispatch({ type: "ANSWER_QUESTION", payload: isCorrect });
 
-	/**
-	 * Calculates current progress percentage
-	 */
-	const calculateProgress = (): number => {
-		return Math.round((currentQuestionIndex / questions.length) * 100);
-	};
+    const result = await refetch();
+    // If no question is returned, end the game.
+    if (!result.data) {
+      dispatch({ type: "GAME_OVER" });
+    }
+  };
 
-	// Loading state
-	if (isLoading) {
-		return (
-			<div className="min-h-screen flex items-center justify-center bg-gray-50 ">
-				<div className="text-center">
-					<div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4">
-						<p className="text-xl font-medium text-gray-700">
-							Loading questions...
-						</p>
-					</div>
-				</div>
-			</div>
-		);
-	}
+  if (isLoading) {
+    return <Loading />;
+  }
 
-	// Game Over state
-	if (gameOver) {
-		const percentage = Math.round((score / questions.length) * 100);
-		let message = "Good effort!";
+  if (error) {
+    return (
+      <div className="text-red-500">
+        Error loading question: {error.message}
+      </div>
+    );
+  }
 
-		if (percentage >= 80) {
-			message = "Excellent work!";
-		} else if (percentage >= 50) {
-			message = "Well done!";
-		}
+  // Render Game Over screen if game is over.
+  if (gameOver) {
+    return (
+      <GameOver
+        score={score}
+        totalQuestions={questionCount}
+        resetGame={() => {
+          dispatch({ type: "RESET_GAME" });
+          refetch(); // Optionally refetch the first question after reset.
+        }}
+      />
+    );
+  }
 
-		return (
-			<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-				<Card className="w-full max-w-md shadow-xl border-0">
-					<CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
-						<CardTitle className="text-3xl font-bold text-center">
-							Game Over!
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="pt-6 pb-8 px-8">
-						<div className="text-center space-y-6">
-							<div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-blue-100 mb-4">
-								<span className="text-3xl font-bold text-blue-600">
-									{percentage}%
-								</span>
-							</div>
+  // If for any reason there's no current question, show a fallback.
+  if (!currentQuestion) {
+    return <div>Loading question...</div>;
+  }
 
-							<div className="space-y-2">
-								<h3 className="text-2xl font-semibold text-gray-800">
-									{message}
-								</h3>
-								<p className="text-lg text-gray-600">
-									You scored{" "}
-									<span className="font-bold text-blue-600">{score}</span> out
-									of <span className="font-bold">{questions.length}</span>
-								</p>
-							</div>
+  // Calculate progress. Here we simply show the current question number.
+  const progress = questionCount ? (questionCount / (questionCount + 1)) * 100 : 0;
 
-							<Button
-								onClick={resetGame}
-								className="mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium px-8 py-2 rounded-full shadow-lg transition-all duration-300 hover:shadow-xl"
-							>
-								Play Again
-							</Button>
-						</div>
-					</CardContent>
-				</Card>
-			</div>
-		);
-	}
-
-	// Active game state
-	const currentQuestion = questions[currentQuestionIndex];
-	const correctAns = currentQuestion.options[currentQuestion.correctAnswer];
-
-	return (
-		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-10 px-4">
-			<div className="max-w-4xl mx-auto">
-				<header className="text-center mb-8">
-					<h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
-						Trivia Challenge
-					</h1>
-					<p className="text-gray-600">
-						Test your knowledge with these challenging questions!
-					</p>
-				</header>
-
-				<div className="mb-6">
-					<div className="flex justify-between items-center mb-2">
-						<span className="text-sm font-medium text-gray-600">
-							Question {currentQuestionIndex + 1} of {questions.length}
-						</span>
-						<span className="text-sm font-medium text-gray-600">
-							Progress: {calculateProgress()}%
-						</span>
-					</div>
-					<Progress value={calculateProgress()} className="h-2 bg-gray-200" />
-				</div>
-
-				<div className="flex flex-col items-center space-y-8">
-					<Question
-						question={currentQuestion.question}
-						options={currentQuestion.options}
-						correctAnswer={correctAns}
-						onAnswer={handleAnswer}
-					/>
-				</div>
-			</div>
-		</div>
-	);
+  return (
+    <div className="min-h-screen bg-gradient-to-br bg-gray-50 py-10 px-4 text-white">
+      <Header />
+      <ProgressBar
+        progress={progress}
+        totalQuestions={questionCount + 1} // Shows the current question number as total.
+        currentQuestion={questionCount + 1}
+      />
+      <div className="flex flex-col items-center space-y-8">
+        <Question
+          question={currentQuestion.question}
+          options={currentQuestion.options}
+          correctAnswer={currentQuestion.options[currentQuestion.correctAnswer]}
+          onAnswer={handleAnswer}
+        />
+      </div>
+    </div>
+  );
 }
 
 export default App;

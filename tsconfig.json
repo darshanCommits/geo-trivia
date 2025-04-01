@@ -18,9 +18,7 @@
     // "declaration": true, //Generate declaration files
     // "declarationMap": true
   },
-  "include": [ "app.ts", "src/**/*" ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": [ "./frontend/src/*.ts", "./shared/src/*.ts", "./backend/src/*.ts" ],
+  "exclude": [ "node_modules" ]
 }
 

@@ -1,15 +1,18 @@
 {
   "extends": "../tsconfig.json",
   "compilerOptions": {
-    "target": "es6",
-    "module": "esnext", // Or "esnext", depending on your backend
+    "target": "es2020",
+    "module": "esnext",
     "outDir": "./dist",
     "composite": true,
-    "noEmit": true,
+    "noEmit": false,
+    "sourceMap": true, // Add this for better debugging
     "removeComments": true
 
   },
-  "include": [ "./*.ts", "./**/*.ts", "../shared/**/*.ts" ], // Add this line
-  "exclude": [ "node_modules" ]
+  "include": [ "./src/**/*", "./*.d.ts", "../shared/**/*.ts" ],
+  "exclude": [
+    "node_modules"
+  ]
 }
 

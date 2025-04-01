@@ -68,6 +68,28 @@ function Question({
 		return isAnswered && option !== selectedOption && option !== correctAnswer;
 	};
 
+	const OptionList = ({ options }: { options: string[] }) => {
+		return (
+			<ul className="space-y-4">
+				{options.map((option) => (
+					<ul key={option}>
+						<Button
+							variant="secondary"
+							onClick={() => handleOptionSelect(option)}
+							disabled={isOptionDisabled(option)}
+							className={cn(
+								"w-full py-2 rounded-lg text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300",
+								getOptionStyle(option),
+							)}
+						>
+							{option}
+						</Button>
+					</ul>
+				))}
+			</ul>
+		);
+	};
+
 	return (
 		<div className="w-full max-w-md transition-opacity duration-300 ease-in-out opacity-100">
 			<Card>
@@ -77,23 +99,7 @@ function Question({
 					</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<ul className="space-y-4">
-						{options.map((option) => (
-							<li key={option}>
-								<Button
-									variant="secondary"
-									onClick={() => handleOptionSelect(option)}
-									disabled={isOptionDisabled(option)}
-									className={cn(
-										"w-full py-2 rounded-lg text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300",
-										getOptionStyle(option),
-									)}
-								>
-									{option}
-								</Button>
-							</li>
-						))}
-					</ul>
+					<OptionList options={options} />
 				</CardContent>
 			</Card>
 		</div>

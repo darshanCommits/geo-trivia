@@ -1,35 +1,18 @@
-import type { QuestionType } from "%/types";
-import express, { type Request, type Response } from "express";
+import express from "express";
+import cors from "cors";
+import { setupRoutes } from "#/routes";
+import { config } from "#/config";
 
 const app = express();
-const port = 3000;
+const port = config.port;
 
-const data: QuestionType[] = [
-	{
-		id: 1,
-		question: "What is the capital of ",
-		options: ["London", "Paris", "Berlin", "Rome"],
-		correctAnswer: 1,
-	},
-	{
-		id: 2,
-		question: "What is the highest mountain in the world?",
-		options: ["K2", "Kangchenjunga", "Mount Everest", "Lhotse"],
-		correctAnswer: 2,
-	},
-];
+app.use(
+	cors({
+		origin: "http://localhost:5173", // allow only this origin
+	}),
+);
 
-let currentIndex = 0;
-
-app.get("/next", (_: Request, res: Response) => {
-	if (currentIndex < data.length) {
-		const value = data[currentIndex];
-		currentIndex++;
-		res.send(value);
-	} else {
-		res.send("hu");
-	}
-});
+setupRoutes(app);
 
 app.listen(port, () => {
 	console.log(`Server is running on port ${port}`);
