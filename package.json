@@ -1,24 +1,14 @@
 {
 	"name": "GeoTrivia",
 	"private": true,
-	"workspaces": ["frontend", "backend", "shared"],
 	"scripts": {
-		"build": "npm run build:shared && npm run typecheck && concurrently \"npm run build:backend\" \"npm run build:frontend\"",
-		"build:shared": "tsc -b shared",
-		"build:backend": "cd backend && npm run build",
-		"build:frontend": "cd frontend && npm run build",
-
-		"dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-		"dev:backend": "cd backend && npm run dev",
-		"dev:frontend": "cd frontend && npm run dev",
-
-		"typecheck": "concurrently \"npm run typecheck:backend\" \"npm run typecheck:frontend\"",
-		"typecheck:backend": "cd backend && npm run typecheck",
-		"typecheck:frontend": "cd frontend && npm run typecheck",
-
-		"clean": "concurrently \"rm -rf backend/dist\" \"rm -rf frontend/dist\" \"rm -rf shared/dist\""
+		"pnpm:preinstall": "npx only-allow pnpm",
+		"build": "pnpm --filter shared run build && pnpm --filter backend --filter frontend run build --parallel",
+		"dev": "pnpm --filter backend run dev --parallel && pnpm --filter frontend run dev",
+		"typecheck": "pnpm --parallel --filter backend --filter frontend run typecheck ",
+		"clean": "pnpm exec rimraf backend/dist frontend/dist shared/dist"
 	},
 	"devDependencies": {
-		"concurrently": "^9.1.2"
+		"rimraf": "^5.0.0"
 	}
 }

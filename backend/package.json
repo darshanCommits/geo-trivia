@@ -8,13 +8,16 @@
 		"typecheck": "tsc -p tsconfig.json"
 	},
 	"dependencies": {
-		"@google/generative-ai": "^0.24.0",
+		"@google/genai": "^0.7.0",
 		"cors": "^2.8.5",
 		"dotenv": "^16.4.7",
 		"express": "^4.21.2",
-		"socket.io": "^4.8.1"
+		"socket.io": "^4.8.1",
+		"@lib/zod-gem": "file:../libs/zod-gem",
+		"zod": "^3.24.2"
 	},
 	"devDependencies": {
+		"@types/cors": "^2.8.17",
 		"@types/express": "^5.0.1",
 		"@types/node": "^22.13.11",
 		"esbuild": "^0.25.1",

@@ -1,76 +1,78 @@
-import { PROMPT } from "#/data/questions.data";
-import type { QuestionType } from "%/types";
+import { QuestionSchema, type QuestionType } from "@shared/types";
+import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { z } from "zod";
+import toZodGem from "@lib/zod-gem";
 
-dotenv.config(); // Load .env file
+dotenv.config();
 
 const API_KEY = process.env.GEMINI_API_KEY || "";
-
-import {
-	type GenerativeModel,
-	GoogleGenerativeAI,
-} from "@google/generative-ai";
+if (!API_KEY) {
+	throw new Error("GEMINI_API_KEY is not set.");
+}
 
 class QuestionService {
 	private city: string;
+	private que_count: number;
 	private questions: QuestionType[] = [];
 	private index = 0;
-	private genAI: GoogleGenerativeAI;
-	private model: GenerativeModel;
+	private genAI: GoogleGenAI;
 
-	constructor(city: string) {
+	constructor(city: string, count: number) {
 		this.city = city;
-		this.genAI = new GoogleGenerativeAI(API_KEY);
-		this.model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+		this.que_count = count;
+
+		this.genAI = new GoogleGenAI({ apiKey: API_KEY });
 	}
 
 	setCity(city: string): void {
 		this.city = city;
 	}
 
-	validateJson(text: string): string {
-		const regex = /^\s*```(?:json)?\s*([\s\S]*?)\s*```\s*$/;
-		const match = text.match(regex);
+	private async generate() {
+		const contents = `Generate ${this.que_count} concise Geo-Political-Historical questions about ${this.city} with a maximum of 10 words per question and a maximum of 5 words per option.`;
 
-		if (match) {
-			return match[1].trim();
-		}
-
-		if (!Array.isArray(text) || text.length === 0) {
-			throw new Error("Invalid JSON format or empty response.");
-		}
-
-		return text.trim();
+		return await this.genAI.models.generateContent({
+			model: "gemini-2.0-flash",
+			contents,
+			config: {
+				responseMimeType: "application/json",
+				responseSchema: toZodGem(QuestionSchema),
+			},
+		});
 	}
 
 	async fetchQuestions(): Promise<void> {
-		const prompt = PROMPT(this.city);
+		const result = await this.generate();
+		const response = result.text;
+		if (!response) throw new Error("Empty Response from Gemini.");
+		this.setValidQuestions(response);
+	}
+
+	private setValidQuestions(response: string) {
 		try {
-			const result = await this.model.generateContent(prompt);
-			const response = result.response;
-			const text = this.validateJson(response.text());
-
-			if (!text) {
-				throw new Error("Empty Response from Gemini.");
-			}
-
-			this.questions = JSON.parse(text);
-			console.log(this.questions);
+			const parsed = JSON.parse(response);
+			this.questions = z.array(QuestionSchema).parse(parsed);
 			this.index = 0;
-		} catch (error) {
-			console.error("Failed to parse questions JSON:", error);
+		} catch (err) {
+			console.error("Failed to parse questions:", err);
+			console.error("Raw response:", response);
+			if (err instanceof z.ZodError) {
+				throw new Error(
+					`Zod validation errors: ${err.errors.map((e) => e.message).join(", ")}`,
+				);
+			}
+			throw new Error("Invalid JSON from Gemini.");
 		}
 	}
 
-	nextQuestion(): QuestionType | null {
+	getNextQuestion(): QuestionType | null {
 		if (this.index < this.questions.length) {
-			return this.questions[this.index++];
+			const question = this.questions[this.index];
+			this.index++;
+			return question;
 		}
 		return null;
-	}
-
-	reset(): void {
-		this.index = 0;
 	}
 }
 

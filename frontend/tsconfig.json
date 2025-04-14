@@ -1,16 +1,23 @@
 {
-  "extends": "../tsconfig.json",
+  "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "target": "es6",
-    "module": "esnext",
+    "baseUrl": "./",
+    "target": "ESNext",
+    "module": "ESNext",
     "moduleResolution": "node",
-    "composite": true,
     "jsx": "react-jsx",
     "allowJs": true,
     "types": [ "vite/client" ],
     "noEmit": true,
-    "incremental": true
+    "incremental": true,
+    "paths": {
+      "@/*": [ "src/*" ],
+      "@shared/*": [ "../shared/src/*" ]
+    }
   },
-  "include": [ "./src/**/*", "./*.d.ts", "../shared/**/*.ts" ],
-  "exclude": [ "node_modules" ]
+  "include": [
+    "./src/**/*",
+    "../shared/src/**/*",
+    "../libs/*/src/**/*"
+  ]
 }

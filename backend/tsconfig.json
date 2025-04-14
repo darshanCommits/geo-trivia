@@ -1,18 +1,16 @@
 {
-  "extends": "../tsconfig.json",
+  "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "target": "es2020",
-    "module": "esnext",
-    "outDir": "./dist",
-    "composite": true,
+    "target": "ESNext",
+    "module": "ESNext",
     "noEmit": false,
     "sourceMap": true, // Add this for better debugging
     "removeComments": true
-
   },
-  "include": [ "./src/**/*", "./*.d.ts", "../shared/**/*.ts" ],
-  "exclude": [
-    "node_modules"
+  "include": [
+    "./src/**/*",
+    "../shared/src/**/*",
+    "../libs/*/src/**/*"
   ]
 }
 

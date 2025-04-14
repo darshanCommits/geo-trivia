@@ -1,0 +1,6 @@
+packages:
+  - "frontend/"
+  - 'backend/'
+  - 'shared/'
+  - 'libs/*' # this one is for independent libraries and will be imported as dependencies
+

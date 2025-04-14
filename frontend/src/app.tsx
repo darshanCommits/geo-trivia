@@ -1,4 +1,4 @@
-import type { QuestionType } from "%/types";
+import type { QuestionType } from "@shared/types";
 import { useEffect, useReducer } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Question from "./Question";

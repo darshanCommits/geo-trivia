@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"rootDir": "./",
+		"baseUrl": ".",
+		"composite": true,
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "Node",
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"skipLibCheck": true,
+		"paths": {
+			"@frontend/*": ["frontend/src/*"],
+			"@shared/*": ["shared/src/*"],
+			"@backend/*": ["backend/src/*"],
+			"@lib/*": ["libs/*"]
+		}
+	},
+	"exclude": ["node_modules"]
+}

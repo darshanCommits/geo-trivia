@@ -1,13 +1,13 @@
 import type { Request, Response } from "express";
-import QuestionService from "#/services/question.service";
+import QuestionService from "@backend/services/question.service";
 
-// Assuming you have environment variables set up
-const CITY = process.env.CITY || "New York";
-const questionService = new QuestionService(CITY);
+const QUE_COUNT = 10;
+const CITY = process.env.CITY || "Udaipur";
 
-export const initializeQuestions = async (req: Request, res: Response) => {
+const questionService = new QuestionService(CITY, QUE_COUNT);
+
+export const initializeQuestions = async (_: Request, res: Response) => {
 	questionService.setCity(CITY);
-
 	try {
 		await questionService.fetchQuestions();
 		res.status(200).send({ message: "Questions initialized successfully." });
@@ -18,24 +18,16 @@ export const initializeQuestions = async (req: Request, res: Response) => {
 };
 
 export const getNextQuestion = (_: Request, res: Response) => {
+	// is this needed?
 	if (!questionService) {
 		res.status(500).send({ message: "Question service not initialized." });
 	}
 
-	const question = questionService.nextQuestion();
+	const question = questionService.getNextQuestion();
 
 	if (question) {
-		res.status(200).json(question);
+		res.status(200).send(question);
+	} else {
+		res.status(200).send({ message: "No more questions." }); // instead of 204
 	}
-
-	res.status(204).send({ message: "No more questions." }); // 204 No Content
-};
-
-export const resetQuestions = (_: Request, res: Response) => {
-	if (!questionService) {
-		res.status(500).send({ message: "Question service not initialized." });
-	}
-
-	questionService.reset();
-	res.status(200).send({ message: "Questions reset." });
 };
