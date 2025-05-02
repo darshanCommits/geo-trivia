@@ -1,79 +1,96 @@
-import { QuestionSchema, type QuestionType } from "@shared/types";
-import { GoogleGenAI } from "@google/genai";
+import type { QuestionType } from "@shared/types";
+import { GoogleGenAI, type Schema, Type } from "@google/genai";
 import dotenv from "dotenv";
-import { z } from "zod";
-import toZodGem from "@lib/zod-gem";
 
 dotenv.config();
+
+export const geminiConfig = (count: number): Schema => {
+	return {
+		type: Type.ARRAY,
+		maxItems: `${count}`,
+		minItems: `${count}`,
+		items: {
+			required: ["question", "options", "correctAnswer", "timeout", "region"],
+			description: "Question Schema for geopolitical and historical quizzes.",
+			type: Type.OBJECT,
+			properties: {
+				question: {
+					type: Type.STRING,
+					maxLength: "100",
+					description:
+						"Concise Question Description. Must be of <region>'s geopolitical and historical events.",
+				},
+				options: {
+					type: Type.ARRAY,
+					minItems: "4",
+					maxItems: "4",
+					description: "Array of potential answers.",
+					items: {
+						type: Type.STRING,
+						maxLength: "50",
+					},
+				},
+				correctAnswer: {
+					type: Type.INTEGER,
+					minimum: 0,
+					maximum: 3,
+					description: "Index of correct answer from <options>",
+					format: "int32",
+				},
+				timeout: {
+					type: Type.INTEGER,
+					minimum: 7,
+					maximum: 15,
+					description: "Timeout for the question.",
+					format: "int32",
+				},
+				region: {
+					type: Type.STRING,
+					description:
+						"This can be either a city/state/country or a geographical hotspot like bermuda island.",
+				},
+			},
+		},
+	};
+};
 
 const API_KEY = process.env.GEMINI_API_KEY || "";
 if (!API_KEY) {
 	throw new Error("GEMINI_API_KEY is not set.");
 }
 
-class QuestionService {
-	private city: string;
-	private que_count: number;
-	private questions: QuestionType[] = [];
-	private index = 0;
-	private genAI: GoogleGenAI;
+const genAI = new GoogleGenAI({ apiKey: API_KEY });
 
-	constructor(city: string, count: number) {
-		this.city = city;
-		this.que_count = count;
+export async function fetchQuestions(
+	city: string,
+	queCount: number,
+): Promise<QuestionType[]> {
+	const contents = `Generate ${queCount} concise Geo-Political-Historical questions about ${city} with a maximum of 10 words per question and a maximum of 5 words per option.`;
 
-		this.genAI = new GoogleGenAI({ apiKey: API_KEY });
+	const result = await genAI.models.generateContent({
+		model: "gemini-2.0-flash",
+		contents,
+		config: {
+			responseMimeType: "application/json",
+			responseSchema: geminiConfig(queCount),
+		},
+	});
+
+	if (!result) {
+		throw new Error("Couldn't initialize gemini");
 	}
 
-	setCity(city: string): void {
-		this.city = city;
+	const response = result.text;
+	if (!response) {
+		throw new Error("Empty Response from Gemini.");
 	}
 
-	private async generate() {
-		const contents = `Generate ${this.que_count} concise Geo-Political-Historical questions about ${this.city} with a maximum of 10 words per question and a maximum of 5 words per option.`;
-
-		return await this.genAI.models.generateContent({
-			model: "gemini-2.0-flash",
-			contents,
-			config: {
-				responseMimeType: "application/json",
-				responseSchema: toZodGem(QuestionSchema),
-			},
-		});
-	}
-
-	async fetchQuestions(): Promise<void> {
-		const result = await this.generate();
-		const response = result.text;
-		if (!response) throw new Error("Empty Response from Gemini.");
-		this.setValidQuestions(response);
-	}
-
-	private setValidQuestions(response: string) {
-		try {
-			const parsed = JSON.parse(response);
-			this.questions = z.array(QuestionSchema).parse(parsed);
-			this.index = 0;
-		} catch (err) {
-			console.error("Failed to parse questions:", err);
-			console.error("Raw response:", response);
-			if (err instanceof z.ZodError) {
-				throw new Error(
-					`Zod validation errors: ${err.errors.map((e) => e.message).join(", ")}`,
-				);
-			}
-			throw new Error("Invalid JSON from Gemini.");
-		}
-	}
-
-	getNextQuestion(): QuestionType | null {
-		if (this.index < this.questions.length) {
-			const question = this.questions[this.index];
-			this.index++;
-			return question;
-		}
-		return null;
+	try {
+		const parsed = JSON.parse(response);
+		return parsed as QuestionType[];
+	} catch (err) {
+		console.error("Failed to parse questions:", err);
+		console.error("Raw response:", response);
+		throw new Error("Invalid JSON from Gemini.");
 	}
 }
-
-export default QuestionService;

@@ -1,33 +1,28 @@
-import type { Request, Response } from "express";
-import QuestionService from "@backend/services/question.service";
+import { fetchQuestions } from "@backend/services/question.service";
+import type { QuestionType } from "@shared/types";
+import type { NextFunction, Request, Response } from "express";
 
-const QUE_COUNT = 10;
-const CITY = process.env.CITY || "Udaipur";
+type ErrorResponse = {
+	message: string;
+};
 
-const questionService = new QuestionService(CITY, QUE_COUNT);
+type QueryType = {
+	city: string;
+	queCount: number;
+};
 
-export const initializeQuestions = async (_: Request, res: Response) => {
-	questionService.setCity(CITY);
+export async function initializeQuestions(
+	req: Request<{}, {}, {}, QueryType>,
+	res: Response<QuestionType[] | ErrorResponse>,
+) {
+	const { city, queCount } = req.body;
 	try {
-		await questionService.fetchQuestions();
-		res.status(200).send({ message: "Questions initialized successfully." });
+		const questions = await fetchQuestions(city, queCount);
+
+		console.log(questions);
+		res.status(200).json(questions);
 	} catch (error) {
 		console.error("Failed to initialize questions:", error);
-		res.status(500).send({ message: "Failed to initialize questions." });
+		res.status(500).json({ message: "Failed to initialize questions." });
 	}
-};
-
-export const getNextQuestion = (_: Request, res: Response) => {
-	// is this needed?
-	if (!questionService) {
-		res.status(500).send({ message: "Question service not initialized." });
-	}
-
-	const question = questionService.getNextQuestion();
-
-	if (question) {
-		res.status(200).send(question);
-	} else {
-		res.status(200).send({ message: "No more questions." }); // instead of 204
-	}
-};
+}

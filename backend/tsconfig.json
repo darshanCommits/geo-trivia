@@ -3,8 +3,8 @@
   "compilerOptions": {
     "target": "ESNext",
     "module": "ESNext",
-    "noEmit": false,
-    "sourceMap": true, // Add this for better debugging
+    "noEmit": true,
+    "sourceMap": false, // Add this for better debugging
     "removeComments": true
   },
   "include": [

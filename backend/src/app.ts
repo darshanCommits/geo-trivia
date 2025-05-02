@@ -6,6 +6,7 @@ import { config } from "@backend/config";
 const app = express();
 const port = config.port;
 
+app.use(express.json());
 app.use(
 	cors({
 		origin: "http://localhost:5173", // allow only this origin
