@@ -1,9 +1,8 @@
-import { QuestionCard } from "@/components/large/QuestionCard";
+import { QuestionCard } from "@/components/ui/QuestionCard";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import Title from "@/components/ui/title-header";
 import type { QuestionType } from "@shared/types";
-import { useState } from "react";
 
 GameComponent.defaultProps = {
 	total: 15,

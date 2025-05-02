@@ -3,11 +3,11 @@ import { Badge } from "./badge";
 import { cn } from "@/lib/utils";
 
 const variants = cva(
-	"-rotate-1 border-4 max-w-3xl w-full   h-16 px-12 text-4xl",
+	"border-4 max-w-3xl w-full mx-auto h-16 px-12 text-4xl",
 	{
 		variants: {
 			variant: {
-				default: "bg-red text-white",
+				default: "bg-red text-white -rotate-1 ",
 				bare: "bg-main",
 			},
 		},

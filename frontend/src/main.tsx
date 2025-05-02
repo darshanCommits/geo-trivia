@@ -36,7 +36,7 @@ function AppRoutes() {
 if (rootElement) {
 	const root = ReactDOM.createRoot(rootElement);
 	root.render(
-		<React.StrictMode>
+		<React.StrictMode >
 			<QueryClientProvider client={queryClient}>
 				<AppRoutes />
 			</QueryClientProvider>

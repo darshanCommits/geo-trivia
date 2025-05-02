@@ -12,7 +12,7 @@ type QueryType = {
 };
 
 export async function initializeQuestions(
-	req: Request<{}, {}, {}, QueryType>,
+	req: Request<{}, QuestionType[], QueryType>,
 	res: Response<QuestionType[] | ErrorResponse>,
 ) {
 	const { city, queCount } = req.body;
