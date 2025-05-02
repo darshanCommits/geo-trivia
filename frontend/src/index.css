@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+* {
+  font-family: "JetBrains Mono", monospace;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -35,6 +39,7 @@
 }
 
 @theme inline {
+  --font-display: 'JetBrains Mono';
   --color-main: var(--main);
   --color-background: var(--background);
   --color-secondary-background: var(--secondary-background);

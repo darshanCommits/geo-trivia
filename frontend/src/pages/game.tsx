@@ -58,7 +58,7 @@ export default function GamePage() {
 	}
 
 	return (
-		<div className="bg-emerald-200 pattern-background relative">
+		<div className="bg-emerald-300 pattern-background relative">
 			<Star9
 				size={250}
 				className="text-black dark:text-blue-500 absolute top-20 left-20"

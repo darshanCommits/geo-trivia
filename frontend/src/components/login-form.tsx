@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import GoogleLogo from "./icons/google";
 import AppleLogo from "./icons/apple";
 import { Badge } from "./ui/badge";
+import { Link } from "react-router";
 
 export function LoginForm({
 	className,
@@ -19,7 +20,7 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
 	return (
 		<div className={cn("flex flex-col gap-6", className)} {...props}>
-			<Card>
+			<Card className="bg-blue-400">
 				<CardHeader className="text-center">
 					<CardTitle className="text-xl">Welcome!</CardTitle>
 					<CardDescription>
@@ -61,32 +62,35 @@ export function LoginForm({
 								<div className="grid gap-3">
 									<div className="flex items-center">
 										<Label htmlFor="password">Password</Label>
-										<a
-											href="#"
+										<Link
+											to="#"
 											className="ml-auto text-sm underline-offset-4 hover:underline"
 										>
 											Forgot your password?
-										</a>
+										</Link>
 									</div>
 									<Input id="password" type="password" required />
 								</div>
-								<Button type="submit" className="w-full">
-									Login
-								</Button>
+								<Link to="/game">
+									<Button type="submit" className="w-full bg-red-400">
+										Login
+									</Button>
+								</Link>
 							</div>
 							<div className="text-center text-sm">
 								Don&apos;t have an account?{" "}
-								<a href="#" className="underline underline-offset-4">
+								<Link to="#" className="underline underline-offset-4">
 									Sign up
-								</a>
+								</Link>
 							</div>
 						</div>
 					</form>
 				</CardContent>
 			</Card>
 			<div className="text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
-				By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-				and <a href="#">Privacy Policy</a>.
+				By clicking continue, you agree to our{" "}
+				<Link to="#">Terms of Service</Link> and{" "}
+				<Link to="#">Privacy Policy</Link>.
 			</div>
 		</div>
 	);
