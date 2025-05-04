@@ -31,7 +31,7 @@ function Podium(props: { topThree: Player[] }) {
 	const heightRatios = [1, 0.75, 0.5]; // 1st: 100%, 2nd: 75%, 3rd: 50%
 
 	return (
-		<div className="flex justify-center items-end gap-4">
+		<div className="flex justify-center items-end gap-4 ">
 			{props.topThree.map((player, index) => (
 				<div
 					key={player.id}
@@ -39,7 +39,7 @@ function Podium(props: { topThree: Player[] }) {
 				>
 					<div
 						style={{ height: `${maxHeight * heightRatios[index]}px` }}
-						className={`w-24 ${colors[index]} border-2 border-black flex items-center justify-center text-black font-bold text-xl`}
+						className={`w-24 ${colors[index]} border-2 border-black flex items-center justify-center text-black font-bold text-xl shadow-shadow`}
 					>
 						{player.score}
 					</div>
@@ -53,11 +53,14 @@ function Podium(props: { topThree: Player[] }) {
 
 function OtherList(props: { restPlayers: Player[] }) {
 	return (
-		<div className="space-y-2 bg-white w-full">
+		<div className="space-y-2 bg-white w-full p-4 px-8 border-2  shadow-shadow">
 			{props.restPlayers.map((x) => (
-				<p key={x.id}>
-					{x.id}:	{x.name}
-				</p>
+				<div key={x.id} className="flex justify-between border-2 px-8">
+					<span>
+						#{x.id}: {x.name}
+					</span>
+					<span>{x.score}</span>
+				</div>
 			))}
 		</div>
 	);
