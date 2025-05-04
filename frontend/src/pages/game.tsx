@@ -3,8 +3,9 @@ import type { QuestionType } from "@shared/types";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Spinner } from "@/components/ui/spinner";
-import {  fetchMockQue } from "@/lib/fetchMockQue";
+import { fetchMockQue } from "@/lib/fetchMockQue";
 import GameComponent from "@/components/game-component";
+import { useNavigate } from "react-router";
 
 async function fetchQuestions() {
 	const res = await fetch("http://localhost:3000/api/questions/init", {
@@ -27,6 +28,7 @@ async function fetchQuestions() {
 }
 
 export default function GamePage() {
+	const navigate = useNavigate();
 	const [score, setScore] = useState(0);
 	const [questionIndex, setQuestionIndex] = useState(0);
 	const {
@@ -54,7 +56,7 @@ export default function GamePage() {
 	const currentQuestion = questions[questionIndex];
 
 	if (!currentQuestion) {
-		return <div>No more questions!</div>;
+		navigate("/leaderboard");
 	}
 
 	return (
