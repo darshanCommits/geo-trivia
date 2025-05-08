@@ -1,7 +1,9 @@
 {
 	"name": "backend",
 	"private": true,
-	"version": "0.0.0",
+	"version": "0.1.0",
+	"description": "GeoTrivia Backend",
+	"main": "dist/app.js",
 	"scripts": {
 		"build": "esbuild src/app.ts --bundle --outfile=dist/app.js --platform=node --format=cjs",
 		"dev": "nodemon --watch src --ext ts,json --exec 'tsx src/app.ts'",
@@ -12,12 +14,18 @@
 		"cors": "^2.8.5",
 		"dotenv": "^16.4.7",
 		"express": "^4.21.2",
-		"socket.io": "^4.8.1"
+		"socket.io": "^4.8.1",
+		"pg": "^8.11.3",
+		"bcrypt": "^5.1.1",
+		"jsonwebtoken": "^9.0.2"
 	},
 	"devDependencies": {
 		"@types/cors": "^2.8.17",
 		"@types/express": "^5.0.1",
 		"@types/node": "^22.13.11",
+		"@types/pg": "^8.10.9",
+		"@types/bcrypt": "^5.0.2",
+		"@types/jsonwebtoken": "^9.0.5",
 		"esbuild": "^0.25.1",
 		"nodemon": "^3.1.9",
 		"tsx": "^4.19.3",

@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import { setupRoutes } from "@backend/routes";
 import { config } from "@backend/config";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const app = express();
 const port = config.port;
