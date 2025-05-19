@@ -2,61 +2,72 @@ import Star9 from "@/components/stars/s9";
 import type { QuestionType } from "@shared/types";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Spinner } from "@/components/ui/spinner";
-import { fetchMockQue } from "@/lib/fetchMockQue";
 import GameComponent from "@/components/game-component";
-import { useNavigate } from "react-router";
+import { useNavigate } from "@tanstack/react-router";
+import { LoadingPage } from "@/pages/loading";
+import { ErrorPage } from "@/pages/error";
 
-async function fetchQuestions() {
-	const res = await fetch("http://localhost:3000/api/questions/init", {
-		method: "POST",
-		headers: {
-			"Content-Type": "application/json",
-		},
-		body: JSON.stringify({
-			city: "Udaipur",
-			queCount: 5,
-		}),
-	});
-
-	if (!res.ok) {
-		const err = await res.json();
-		throw new Error(err.error ?? "Failed to fetch questions");
-	}
-
-	return res.json();
-}
+import fetchQuestions from "@/lib/fetchQuestions";
+// import { fetchQuestions } from "@/lib/fetchMockQue";
 
 export default function GamePage() {
 	const navigate = useNavigate();
 	const [score, setScore] = useState(0);
 	const [questionIndex, setQuestionIndex] = useState(0);
+
 	const {
 		data: questions,
 		isLoading,
 		error,
 	} = useQuery<QuestionType[]>({
 		queryKey: ["questions"],
-		queryFn: fetchMockQue,
+		queryFn: fetchQuestions,
+		retry: 2,
+		refetchOnWindowFocus: false,
 	});
 
 	function handleAnswer(selectedIndex: number) {
 		if (!questions) return;
-
 		const currentQuestion = questions[questionIndex];
 		if (selectedIndex === currentQuestion.correctAnswer) {
 			setScore((prev) => prev + 1);
 		}
 
-		setQuestionIndex((prev) => prev + 1);
+		if (questionIndex + 1 >= questions.length) {
+			navigate({
+				to: "/leaderboard",
+				search: {
+					finalScore:
+						score + (selectedIndex === currentQuestion.correctAnswer ? 1 : 0),
+				},
+			});
+		} else {
+			setQuestionIndex((prev) => prev + 1);
+		}
 	}
 
-	if (error || !questions) return <div>Error loading questions</div>;
+	if (isLoading) {
+		return <LoadingPage />;
+	}
+
+	if (error) {
+		const err =
+			error instanceof Error ? error : new Error("An unknown error occurred");
+
+		return <ErrorPage error={err} />;
+	}
+
+	if (!questions || questions.length === 0) {
+		return <ErrorPage error={new Error("No questions available")} />;
+	}
 
 	const currentQuestion = questions[questionIndex];
 
 	if (!currentQuestion) {
-		navigate("/leaderboard");
+		navigate({
+			to: "/leaderboard",
+		});
+		return null;
 	}
 
 	return (
@@ -73,18 +84,13 @@ export default function GamePage() {
 				pathClassName="stroke-black dark:stroke-white"
 				strokeWidth={2}
 			/>
-
-			{isLoading ? (
-				<Spinner />
-			) : (
-				<GameComponent
-					score={score}
-					questionData={currentQuestion}
-					onAnswer={handleAnswer}
-					currentQuestionIndex={questionIndex + 1}
-					totalQuestions={15}
-				/>
-			)}
+			<GameComponent
+				score={score}
+				questionData={currentQuestion}
+				onAnswer={handleAnswer}
+				currentQuestionIndex={questionIndex + 1}
+				totalQuestions={questions.length}
+			/>
 		</div>
 	);
 }

@@ -5,8 +5,8 @@
 	"description": "GeoTrivia Backend",
 	"main": "dist/app.js",
 	"scripts": {
-		"build": "esbuild src/app.ts --bundle --outfile=dist/app.js --platform=node --format=cjs",
-		"dev": "nodemon --watch src --ext ts,json --exec 'tsx src/app.ts'",
+		"build": "esbuild src/index.ts --bundle --outfile=dist/index.js --platform=node --format=cjs",
+		"dev": "nodemon --watch src --ext ts,json --exec 'tsx src/index.ts'",
 		"typecheck": "tsc -p tsconfig.json"
 	},
 	"dependencies": {

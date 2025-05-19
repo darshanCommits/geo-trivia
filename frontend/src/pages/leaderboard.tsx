@@ -1,8 +1,7 @@
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Section } from "@/components/ui/section";
 import TitleHeader from "@/components/ui/title-header";
-import { Link } from "react-router";
+import { Link } from "@tanstack/react-router";
 
 type Player = {
 	id: number;

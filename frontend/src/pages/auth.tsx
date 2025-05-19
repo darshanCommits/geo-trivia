@@ -1,5 +1,3 @@
-import { GalleryVerticalEnd } from "lucide-react";
-
 import { LoginForm } from "@/components/login-form";
 import TitleHeader from "@/components/ui/title-header";
 import Star9 from "@/components/stars/s9";
@@ -30,32 +28,3 @@ export default function LoginPage() {
 		</div>
 	);
 }
-
-// <div className="grid gap-6">
-// 								<div className="grid gap-3">
-// 									<Label htmlFor="email">Email</Label>
-// 									<Input
-// 										id="email"
-// 										type="email"
-// 										placeholder="m@example.com"
-// 										required
-// 									/>
-// 								</div>
-// 								<div className="grid gap-3">
-// 									<div className="flex items-center">
-// 										<Label htmlFor="password">Password</Label>
-// 										<Link
-// 											to="#"
-// 											className="ml-auto text-sm underline-offset-4 hover:underline"
-// 										>
-// 											Forgot your password?
-// 										</Link>
-// 									</div>
-// 									<Input id="password" type="password" required />
-// 								</div>
-// 								<Link to="/game">
-// 									<Button type="submit" className="w-full bg-red-400">
-// 										Login
-// 									</Button>
-// 								</Link>
-// 							</div>

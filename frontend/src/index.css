@@ -74,10 +74,47 @@
     background-size: 75px 75px;
   }
 
-  .pattern-background-smol {
-    background-image:
-      linear-gradient(to right, #80808033 1px, transparent 1px),
-      linear-gradient(to bottom, #80808033 1px, transparent 1px);
-    background-size: 25px 25px;
+  .pattern-move {
+    animation: patternZigzag 4.5s linear infinite;
   }
+
+  @keyframes patternZigzag {
+    0% {
+      background-position: 0 0;
+    }
+
+    12.5% {
+      background-position: 75px 75px;
+    }
+
+    25% {
+      background-position: 0px 150px;
+    }
+
+    37.5% {
+      background-position: 75px 225px;
+    }
+
+    50% {
+      background-position: 0px 300px;
+    }
+
+    62.5% {
+      background-position: 75px 225px;
+    }
+
+    75% {
+      background-position: 0px 150px;
+    }
+
+    87.5% {
+      background-position: 75px 75px;
+    }
+
+    100% {
+      background-position: 0px 0px;
+    }
+  }
+
+
 }

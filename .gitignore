@@ -1,3 +1,5 @@
+rag-clean/
+
 # Logs
 logs
 *.log
@@ -15,6 +17,7 @@ dist-ssr
 
 # Editor directories and files
 .vscode/*
+.helix/
 !.vscode/extensions.json
 .idea
 .DS_Store

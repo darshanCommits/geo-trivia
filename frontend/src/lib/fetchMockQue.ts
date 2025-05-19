@@ -1,4 +1,6 @@
-export const fetchMockQue = async () => {
+export const fetchQuestions = async () => {
+	await new Promise((resolve) => setTimeout(resolve, 50000));
+
 	return [
 		{
 			correctAnswer: 0,

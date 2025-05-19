@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Section } from "@/components/ui/section";
 import TitleHeader from "@/components/ui/title-header";
-import { Link } from "react-router";
+import { Link } from "@tanstack/react-router";
 
 export default function Home() {
 	return (
@@ -25,7 +25,9 @@ export default function Home() {
 
 				<div className="flex flex-col sm:flex-row gap-4 w-full justify-end">
 					<Link to="/auth">
-						<Button size="lg" className="bg-red-400">Login Now </Button>
+						<Button size="lg" className="bg-red-400">
+							Login Now{" "}
+						</Button>
 					</Link>
 
 					<Link to="/leaderboard">

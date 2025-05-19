@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "./ui/badge";
 import GoogleLogo from "./icons/google";
 import AppleLogo from "./icons/apple";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 const formSchema = z.object({
 	email: z.string().email(),
@@ -38,7 +38,7 @@ function MailSignUp({
 
 	const onSubmit = (values: FormValues) => {
 		console.log(values);
-		navigate("/game");
+		navigate({ to: "/game" });
 	};
 
 	return (
