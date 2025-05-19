@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Starts HTTP server
-import "./server";
+import "./http.server";
 
 // Initializes websocket
 import "./socket";

@@ -1,6 +1,6 @@
 import { fetchQuestions } from "@backend/services/question.service";
 import type { QuestionType } from "@shared/types";
-import type { NextFunction, Request, Response } from "express";
+import type { Request, Response } from "express";
 
 type ErrorResponse = {
 	message: string;
@@ -12,7 +12,7 @@ type QueryType = {
 };
 
 export async function initializeQuestions(
-	req: Request<{}, QuestionType[], QueryType>,
+	req: Request<any, QuestionType[], QueryType>,
 	res: Response<QuestionType[] | ErrorResponse>,
 ) {
 	const { city, queCount } = req.body;

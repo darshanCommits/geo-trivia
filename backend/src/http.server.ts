@@ -6,7 +6,7 @@ import { config } from "./config";
 
 export const app: express.Express = express();
 
-export const httpServer = createServer(app);
+export const server = createServer(app);
 
 // Middleware
 app.use(express.json());
@@ -16,6 +16,6 @@ app.use(cors({ origin: "http://localhost:5173" }));
 setupRoutes(app);
 
 // Start server
-httpServer.listen(config.port, () => {
+server.listen(config.port, () => {
 	console.log(`Server running on port ${config.port}`);
 });
