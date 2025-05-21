@@ -11,6 +11,7 @@ import GamePage from "@/pages/game";
 import LeaderBoard from "@/pages/leaderboard";
 import Session from "@/pages/Session";
 import ShareSession from "@/components/ShareSession";
+import { GameLobby } from "./pages/gamelobby";
 
 const rootRoute = createRootRoute({
 	component: () => <Outlet />,
@@ -41,6 +42,11 @@ const routes = {
 		getParentRoute: () => rootRoute,
 		path: "session",
 		component: Session,
+	}),
+	lobby: createRoute({
+		getParentRoute: () => rootRoute,
+		path: "lobby",
+		component: GameLobby,
 	}),
 	shareSession: createRoute({
 		getParentRoute: () => rootRoute,

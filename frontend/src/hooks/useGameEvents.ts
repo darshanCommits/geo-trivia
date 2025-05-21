@@ -1,96 +1,36 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import { useSocket } from "./useSocket";
-import { Events, type Types } from "@shared/types"; // Adjust the import path
+import { Events, type Types } from "@shared/types";
+import { useGameStore } from "@/stores/gameStore"; // path to your zustand store
 
-interface GameState {
-	currentQuestion: Types.QuestionType | null;
-	questionIndex: number;
-	totalQuestions: number;
-	answerResult: {
-		username: string;
-		isAnswerCorrect: boolean;
-		answer: number;
-	} | null;
-	currentScores: Types.Score[];
-	gameOver: boolean;
-	finalScores: Types.Score[] | null;
-	loading: boolean;
-	error: string | null;
-	timer: number | null;
-}
-
-const initialState: GameState = {
-	currentQuestion: null,
-	questionIndex: -1,
-	totalQuestions: 0,
-	answerResult: null,
-	currentScores: [],
-	gameOver: false,
-	finalScores: null,
-	loading: false,
-	error: null,
-	timer: null,
-};
-
-/**
- * Hook to manage game events. Pass in sessionId and username from useSession.
- */
 export function useGameEvents(
 	sessionId?: string | null,
 	username?: string | null,
 ) {
 	const { socket, isConnected, emit, on, off } = useSocket();
-	const [gameState, setGameState] = useState<GameState>(initialState);
-	const timerRef = useRef<number | null>(null);
-	const startTimeRef = useRef<number>(0);
-	const timeoutMsRef = useRef<number>(0);
 
-	// Reset on disconnect or session change
-	useEffect(() => {
-		setGameState(initialState);
-		if (timerRef.current) {
-			clearInterval(timerRef.current);
-			timerRef.current = null;
-		}
-	}, []);
+	// Get state setters and state from store
+	const {
+		setCurrentQuestion,
+		setAnswerResult,
+		setGameOver,
+		setSessionClosed,
+		setLoading,
+		setError,
+		reset,
+		...gameState
+	} = useGameStore();
 
-	// Handlers
+	// Event handlers
 	const handleQuestionPrompt = useCallback(
 		({
 			question,
 			index,
 			total,
 		}: { question: Types.QuestionType; index: number; total: number }) => {
-			// Clear existing timer
-			if (timerRef.current) {
-				clearInterval(timerRef.current);
-			}
-			// Initialize timer
-			timeoutMsRef.current = question.timeout * 1000;
-			startTimeRef.current = Date.now();
-			setGameState((prev) => ({
-				...prev,
-				currentQuestion: question,
-				questionIndex: index,
-				totalQuestions: total,
-				answerResult: null,
-				gameOver: false,
-				loading: false,
-				error: null,
-				timer: question.timeout,
-			}));
-			timerRef.current = setInterval(() => {
-				const elapsed = Date.now() - startTimeRef.current;
-				const remainingMs = Math.max(0, timeoutMsRef.current - elapsed);
-				const remainingSec = Math.ceil(remainingMs / 1000);
-				setGameState((prev) => ({ ...prev, timer: remainingSec }));
-				if (remainingMs <= 0 && timerRef.current) {
-					clearInterval(timerRef.current);
-					timerRef.current = null;
-				}
-			}, 500);
+			setCurrentQuestion(question, index, total);
 		},
-		[],
+		[setCurrentQuestion],
 	);
 
 	const handleAnswerResult = useCallback(
@@ -105,53 +45,31 @@ export function useGameEvents(
 			answer: number;
 			scores: Types.Score[];
 		}) => {
-			if (timerRef.current) {
-				clearInterval(timerRef.current);
-				timerRef.current = null;
-			}
-			setGameState((prev) => ({
-				...prev,
-				answerResult: { username: u, isAnswerCorrect, answer },
-				currentScores: scores,
-				loading: false,
-			}));
+			setAnswerResult(u, isAnswerCorrect, answer, scores);
 		},
-		[],
+		[setAnswerResult],
 	);
 
 	const handleGameOver = useCallback(
 		({ finalScores }: { finalScores: Types.Score[] }) => {
-			if (timerRef.current) {
-				clearInterval(timerRef.current);
-				timerRef.current = null;
-			}
-			setGameState((prev) => ({
-				...prev,
-				gameOver: true,
-				finalScores,
-				currentQuestion: null,
-				timer: null,
-				loading: false,
-			}));
+			setGameOver(finalScores);
 		},
-		[],
+		[setGameOver],
 	);
 
 	const handleSessionClosed = useCallback(() => {
-		if (timerRef.current) {
-			clearInterval(timerRef.current);
-			timerRef.current = null;
-		}
-		setGameState(initialState);
-	}, []);
+		setSessionClosed();
+	}, [setSessionClosed]);
 
-	// Register events
+	// Register / unregister socket events
 	useEffect(() => {
 		if (!socket) return;
+
 		on(Events.QUESTION_PROMPT, handleQuestionPrompt);
 		on(Events.ANSWER_RESULT, handleAnswerResult);
 		on(Events.GAME_OVER, handleGameOver);
 		on(Events.SESSION_CLOSED, handleSessionClosed);
+
 		return () => {
 			off(Events.QUESTION_PROMPT, handleQuestionPrompt);
 			off(Events.ANSWER_RESULT, handleAnswerResult);
@@ -172,54 +90,52 @@ export function useGameEvents(
 	const submitAnswer = useCallback(
 		(answer: number) => {
 			if (!isConnected) {
-				setGameState((prev) => ({ ...prev, error: "Not connected to server" }));
+				setError("Not connected to server");
 				return;
 			}
 			if (!sessionId || !username) {
-				setGameState((prev) => ({
-					...prev,
-					error: "No active session or username",
-				}));
+				setError("No active session or username");
 				return;
 			}
 			if (gameState.timer !== null && gameState.timer <= 0) {
-				setGameState((prev) => ({ ...prev, error: "Time's up!" }));
+				setError("Time's up!");
 				return;
 			}
-			setGameState((prev) => ({ ...prev, loading: true, error: null }));
+			setLoading(true);
+			setError(null);
 			emit(Events.SUBMIT_ANSWER, { sessionId, username, answer });
 		},
-		[isConnected, sessionId, username, gameState.timer, emit],
+		[
+			isConnected,
+			sessionId,
+			username,
+			gameState.timer,
+			emit,
+			setLoading,
+			setError,
+		],
 	);
 
 	const startGame = useCallback(() => {
 		if (!isConnected) {
-			setGameState((prev) => ({ ...prev, error: "Not connected to server" }));
+			setError("Not connected to server");
 			return;
 		}
 		if (!sessionId) {
-			setGameState((prev) => ({ ...prev, error: "No active session" }));
+			setError("No active session");
 			return;
 		}
-		setGameState((prev) => ({
-			...prev,
-			loading: true,
-			error: null,
-			gameOver: false,
-			finalScores: null,
-		}));
+		setLoading(true);
+		setError(null);
+		reset(); // reset gameOver, finalScores etc before starting
 		emit(Events.START_GAME, { sessionId });
-	}, [isConnected, sessionId, emit]);
+	}, [isConnected, sessionId, emit, setError, setLoading, reset]);
 
 	const resetGame = useCallback(() => {
-		if (timerRef.current) {
-			clearInterval(timerRef.current);
-			timerRef.current = null;
-		}
-		setGameState(initialState);
-	}, []);
+		reset();
+	}, [reset]);
 
-	// Helpers using passed username
+	// Helpers using username and current state
 	const hasAnswered = useCallback(() => {
 		return gameState.answerResult?.username === username;
 	}, [gameState.answerResult, username]);
