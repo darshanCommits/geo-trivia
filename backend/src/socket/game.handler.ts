@@ -1,12 +1,13 @@
 import type { Socket, Server as SocketIOServer } from "socket.io";
-import type { SessionData } from "./types";
+import type { Types } from "@shared/types";
+import { Events } from "@shared/types";
 
 export function registerGameHandlers(
 	socket: Socket,
-	sessions: Map<string, SessionData>,
+	sessions: Types.Sessions,
 	io: SocketIOServer,
 ) {
-	socket.on("start_game", ({ sessionId }) => {
+	socket.on(Events.START_GAME, ({ sessionId }) => {
 		const session = sessions.get(sessionId);
 		if (!session || session.hostId !== socket.id) return;
 

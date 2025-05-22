@@ -1,12 +1,12 @@
 import type { Socket } from "socket.io";
-import type { SessionData } from "./types";
 import { fetchQuestions } from "@backend/services/question.service";
+import { Events, type Types } from "@shared/types";
 
 export function registerSessionHandlers(
 	socket: Socket,
-	sessions: Map<string, SessionData>,
+	sessions: Types.Sessions,
 ) {
-	socket.on("create_session", async ({ sessionId, username }) => {
+	socket.on(Events.CREATE_SESSION, async ({ sessionId, username }) => {
 		if (sessions.has(sessionId)) {
 			socket.emit("session_exists");
 			return;
@@ -37,7 +37,7 @@ export function registerSessionHandlers(
 		}
 	});
 
-	socket.on("join_session", ({ sessionId, username, score }) => {
+	socket.on(Events.JOIN_SESSION, ({ sessionId, username, score }) => {
 		const session = sessions.get(sessionId);
 		if (!session) {
 			socket.emit("session_not_found");
@@ -59,5 +59,4 @@ export function registerSessionHandlers(
 		socket.to(sessionId).emit("user_joined", { username });
 		console.log(`${username} joined session ${sessionId}`);
 	});
-
 }

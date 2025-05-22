@@ -1,7 +1,7 @@
 // useSessionSocket.ts
 import { useCallback, useEffect, useRef } from "react";
 import { useSocket } from "./useSocket";
-import { Events } from "@shared/types";
+import { Events, Types } from "@shared/types";
 import { type SessionState, initialSessionState } from "@/stores/sessionStore";
 
 export type SessionStateSetterType = (
@@ -137,18 +137,6 @@ export function useSessionSocket({
 		setStatus("Session already exists. Try another.");
 	}, [setSessionState, setStatus]);
 
-	const handleSessionNotFound = useCallback(() => {
-		console.log("SESSION_NOT_FOUND event received");
-		setSessionState((prev) => ({
-			...prev,
-			error: "Session not found.",
-			isLoading: false,
-			sessionId: null,
-			username: null,
-		}));
-		setStatus("Session not found.");
-	}, [setSessionState, setStatus]);
-
 	const handleUsernameTaken = useCallback(() => {
 		console.log("USERNAME_TAKEN event received");
 		setSessionState((prev) => ({
@@ -272,7 +260,6 @@ export function useSessionSocket({
 		// List of all possible events we need to handle
 		on(Events.SESSION_CREATED, handleSessionCreated);
 		on(Events.SESSION_EXISTS, handleSessionExists);
-		on(Events.SESSION_NOT_FOUND, handleSessionNotFound);
 		on(Events.USERNAME_TAKEN, handleUsernameTaken);
 		on(Events.USER_JOINED, handleUserJoined);
 		on(Events.USER_LEFT, handleUserLeft);
@@ -283,7 +270,6 @@ export function useSessionSocket({
 			console.log("Cleaning up socket event listeners");
 			off(Events.SESSION_CREATED, handleSessionCreated);
 			off(Events.SESSION_EXISTS, handleSessionExists);
-			off(Events.SESSION_NOT_FOUND, handleSessionNotFound);
 			off(Events.USERNAME_TAKEN, handleUsernameTaken);
 			off(Events.USER_JOINED, handleUserJoined);
 			off(Events.USER_LEFT, handleUserLeft);
@@ -295,7 +281,6 @@ export function useSessionSocket({
 		off,
 		handleSessionCreated,
 		handleSessionExists,
-		handleSessionNotFound,
 		handleUsernameTaken,
 		handleUserJoined,
 		handleUserLeft,

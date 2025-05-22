@@ -1,12 +1,12 @@
 import type { Socket, Server as SocketIOServer } from "socket.io";
-import type { SessionData } from "./types";
+import { Events, type Types } from "@shared/types";
 
 export function registerUserHandlers(
 	socket: Socket,
-	sessions: Map<string, SessionData>,
+	sessions: Types.Sessions,
 	io: SocketIOServer,
 ) {
-	socket.on("disconnect", () => {
+	socket.on(Events.DISCONNECT, () => {
 		const { sessionId } = socket.data;
 		if (!sessionId) return;
 
@@ -23,7 +23,7 @@ export function registerUserHandlers(
 		}
 	});
 
-	socket.on("leave_session", () => {
+	socket.on(Events.LEAVE_SESSION, () => {
 		const { sessionId } = socket.data;
 		if (!sessionId) return;
 
@@ -43,7 +43,7 @@ export function registerUserHandlers(
 		socket.data.username = undefined;
 	});
 
-	socket.on("submit_answer", ({ sessionId, answer }) => {
+	socket.on(Events.SUBMIT_ANSWER, ({ sessionId, answer }) => {
 		const session = sessions.get(sessionId);
 
 		if (!session || session.answered) return;
