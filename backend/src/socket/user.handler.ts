@@ -6,101 +6,77 @@ export function registerUserHandlers(
 	sessions: Types.Sessions,
 	io: SocketIOServer,
 ) {
+	// Emit event when a new socket is created
+	socket.emit(Events.CONNECTED, { message: "New Socket Created" });
+
+	// Error handling wrapper
+	const handleError = (error: Error | unknown, context: string) => {
+		console.error(`Error in ${context}:`, error);
+		socket.emit(Events.ERROR, {
+			message: `Something went wrong: ${(error as Error).message}`,
+		});
+	};
+
+	// Disconnect event handler
 	socket.on(Events.DISCONNECT, () => {
-		const { sessionId } = socket.data;
-		if (!sessionId) return;
+		try {
+			const { sessionId } = socket.data;
+			if (!sessionId) {
+				console.warn("User disconnected, no sessionId found");
+				return;
+			}
 
-		const session = sessions.get(sessionId);
-		if (!session) return;
+			const session = sessions.get(sessionId);
+			if (!session) {
+				console.warn(`Session ${sessionId} not found for disconnection`);
+				return;
+			}
 
-		session.users = session.users.filter((u) => u.id !== socket.id);
-		socket.to(sessionId).emit("user_left", { userId: socket.id });
+			// Remove user from session
+			session.users = session.users.filter((u) => u.id !== socket.id);
+			socket.to(sessionId).emit(Events.USER_LEFT, { userId: socket.id });
 
-		if (session.hostId === socket.id || session.users.length === 0) {
-			sessions.delete(sessionId);
-			socket.to(sessionId).emit("session_closed");
-			console.warn(`Session ${sessionId} closed on disconnect`);
+			// If the host disconnected or there are no users left, close the session
+			if (session.hostId === socket.id || session.users.length === 0) {
+				sessions.delete(sessionId);
+				socket.to(sessionId).emit(Events.SESSION_CLOSED);
+				console.log(`Session ${sessionId} closed on disconnect`);
+			}
+		} catch (error) {
+			handleError(error, "DISCONNECT handler");
 		}
 	});
 
 	socket.on(Events.LEAVE_SESSION, () => {
-		const { sessionId } = socket.data;
-		if (!sessionId) return;
+		try {
+			const { sessionId } = socket.data;
+			if (!sessionId) {
+				console.warn("User attempted to leave session, but no sessionId found");
+				return;
+			}
 
-		const session = sessions.get(sessionId);
-		if (!session) return;
+			const session = sessions.get(sessionId);
+			if (!session) {
+				console.warn(`Session ${sessionId} not found for leaving`);
+				return;
+			}
 
-		session.users = session.users.filter((u) => u.id !== socket.id);
-		socket.to(sessionId).emit("user_left", { userId: socket.id });
+			// Remove user from session
+			session.users = session.users.filter((u) => u.id !== socket.id);
+			socket.to(sessionId).emit(Events.USER_LEFT, { userId: socket.id });
 
-		if (session.hostId === socket.id || session.users.length === 0) {
-			sessions.delete(sessionId);
-			socket.to(sessionId).emit("session_closed");
-			console.log(`Session ${sessionId} closed`);
+			// If the host disconnected or there are no users left, close the session
+			if (session.hostId === socket.id || session.users.length === 0) {
+				sessions.delete(sessionId);
+				socket.to(sessionId).emit(Events.SESSION_CLOSED);
+				console.log(`Session ${sessionId} closed on leave`);
+			}
+
+			// Clean up socket data
+			socket.data.sessionId = undefined;
+			socket.data.username = undefined;
+		} catch (error) {
+			handleError(error, "LEAVE_SESSION handler");
 		}
-
-		socket.data.sessionId = undefined;
-		socket.data.username = undefined;
 	});
-
-	socket.on(Events.SUBMIT_ANSWER, ({ sessionId, answer }) => {
-		const session = sessions.get(sessionId);
-
-		if (!session || session.answered) return;
-
-		const que = session.questions[session.currentQuestionIndex];
-		const isAnswerCorrect = que.correctAnswer === answer;
-
-		session.answered = true;
-
-		const user = session.users.find((u) => u.id === socket.id);
-		if (!user) return;
-
-		if (isAnswerCorrect) {
-			user.score += 1;
-		}
-
-		io.to(sessionId).emit("answer_result", {
-			username: user.username,
-			isAnswerCorrect,
-			answer,
-			scores: session.users.map((u) => ({
-				username: u.username,
-				score: u.score,
-			})),
-		});
-
-		setTimeout(() => advanceToNextQuestion(sessionId), 3000);
-	});
-
-	// helper functions
-
-	function advanceToNextQuestion(sessionId: string) {
-		const session = sessions.get(sessionId);
-		if (!session) return;
-
-		session.currentQuestionIndex++;
-		session.answered = false;
-
-		if (session.currentQuestionIndex >= session.questions.length) {
-			io.to(sessionId).emit("game_over", {
-				finalScores: session.users.map((u) => ({
-					username: u.username,
-					score: u.score,
-				})),
-			});
-			sessions.delete(sessionId);
-			console.log(`Game over for session ${sessionId}`);
-		} else {
-			const nextQue = session.questions[session.currentQuestionIndex];
-			io.to(sessionId).emit("question_prompt", {
-				question: nextQue,
-				index: session.currentQuestionIndex,
-				total: session.questions.length,
-			});
-			console.log(
-				`Advancing to question ${session.currentQuestionIndex} for session ${sessionId}`,
-			);
-		}
-	}
 }

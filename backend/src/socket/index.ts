@@ -19,7 +19,10 @@ export const io = new SocketIOServer<
 	Types.User
 >(server, {
 	cors: {
-		origin: "http://localhost:5173",
+		origin: "*",
+		methods: ["GET", "POST"],
+		allowedHeaders: ["Content-Type"], // You can add more headers if needed
+		credentials: false, // Set to true if you need credentials (cookies, etc.)
 	},
 });
 
