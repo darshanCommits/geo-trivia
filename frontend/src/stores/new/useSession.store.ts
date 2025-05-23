@@ -15,6 +15,12 @@ type SessionActions = {
 	setConnectionStatus: (status: boolean) => void;
 };
 
+const defaultValues: SessionState = {
+	sessionId: null,
+	username: null,
+	isSessionConnected: false,
+};
+
 export const useSessionStore = create<SessionState & SessionActions>((set) => ({
 	...defaultValues,
 
@@ -23,9 +29,3 @@ export const useSessionStore = create<SessionState & SessionActions>((set) => ({
 	exitSession: () => set({ sessionId: null, username: null }),
 	setConnectionStatus: (status) => set({ isSessionConnected: status }),
 }));
-
-const defaultValues: SessionState = {
-	sessionId: null,
-	username: null,
-	isSessionConnected: false,
-};

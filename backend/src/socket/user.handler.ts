@@ -1,23 +1,22 @@
-import type { Socket, Server as SocketIOServer } from "socket.io";
+import { Socket, Server as SocketIOServer } from "socket.io";
 import { Events, type Types } from "@shared/types";
+import { serverEmit } from "@backend/utils/emit";
 
 export function registerUserHandlers(
 	socket: Socket,
 	sessions: Types.Sessions,
 	io: SocketIOServer,
 ) {
-	// Emit event when a new socket is created
-	socket.emit(Events.CONNECTED, { message: "New Socket Created" });
+	const emit = serverEmit(socket);
 
 	// Error handling wrapper
 	const handleError = (error: Error | unknown, context: string) => {
 		console.error(`Error in ${context}:`, error);
-		socket.emit(Events.ERROR, {
+		emit(Events.ERROR, {
 			message: `Something went wrong: ${(error as Error).message}`,
 		});
 	};
 
-	// Disconnect event handler
 	socket.on(Events.DISCONNECT, () => {
 		try {
 			const { sessionId } = socket.data;
@@ -47,7 +46,7 @@ export function registerUserHandlers(
 		}
 	});
 
-	socket.on(Events.LEAVE_SESSION, () => {
+	socket.on(Events.LEAVE_SESSION, async ({ sessionId, username }) => {
 		try {
 			const { sessionId } = socket.data;
 			if (!sessionId) {
@@ -63,7 +62,11 @@ export function registerUserHandlers(
 
 			// Remove user from session
 			session.users = session.users.filter((u) => u.id !== socket.id);
-			socket.to(sessionId).emit(Events.USER_LEFT, { userId: socket.id });
+
+			socket.to(sessionId).emit(Events.USER_LEFT, {
+				sessionId: sessionId,
+				username: username,
+			});
 
 			// If the host disconnected or there are no users left, close the session
 			if (session.hostId === socket.id || session.users.length === 0) {

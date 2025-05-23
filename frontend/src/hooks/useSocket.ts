@@ -18,6 +18,7 @@ export const useSocket = () => {
 			...args: Parameters<ClientToServerEvents[EventName]>
 		) => {
 			if (socket?.connected) {
+				console.log(`Triggered ${event}`);
 				socket.emit(event, ...args);
 			} else {
 				console.warn("Socket is not connected. Cannot emit event:", event);

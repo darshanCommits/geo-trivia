@@ -4,6 +4,9 @@ export namespace Events {
 	export const DISCONNECT = "disconnect";
 	export const CONNECTED = "connected";
 
+	export const SESSION_CREATION_FAILED = "session_creation_failed";
+	export const SESSION_NOT_FOUND = "session_not_found";
+
 	export const JOIN_SESSION = "join_session";
 	export const LEAVE_SESSION = "leave_session";
 	export const SESSION_CREATED = "session_created";
@@ -45,18 +48,18 @@ export namespace Types {
 		region: string;
 	};
 
-	// export type User = {
-	// 	id: string;
-	// } & Score;
-
 	export type Score = {
 		username: string;
 		score: number;
 	};
 
 	export type User = {
-		sessionId: string;
+		id?: string;
 		username: string;
+		sessionId: string;
+	};
+
+	export type GameUser = User & {
 		score: number;
 	};
 
@@ -72,36 +75,41 @@ export namespace Types {
 
 // --- Socket.IO Event Interfaces ---
 
-export interface ClientToServerEvents {
-	[Events.CREATE_SESSION]: (payload: Omit<Types.User, "score">) => void;
-	[Events.JOIN_SESSION]: (payload: Omit<Types.User, "score">) => void;
-	[Events.START_GAME]: (payload: {
-		sessionId: string;
-	}) => void;
-	[Events.LEAVE_SESSION]: (payload: Omit<Types.User, "score">) => void;
+type CTSGameEvents = {
 	[Events.SUBMIT_ANSWER]: (
 		payload: Types.User & {
 			answer: number;
 		},
 	) => void;
+};
+
+export type ClientToServerEvents = CTSGameEvents & {
 	[Events.DISCONNECT]: () => void;
-}
+	[Events.CREATE_SESSION]: (payload: Omit<Types.User, "id">) => void;
+	[Events.JOIN_SESSION]: (payload: Omit<Types.User, "id">) => void;
+	[Events.LEAVE_SESSION]: (payload: Omit<Types.User, "id">) => void;
+	[Events.START_GAME]: (payload: {
+		sessionId: string;
+	}) => void;
+};
 
 export interface ServerToClientEvents {
 	[Events.UPDATE_ANSWERS]: () => void;
-	[Events.SESSION_CREATED]: (data: {
-		sessionId: string;
-		username: string;
-	}) => void;
+	[Events.SESSION_CREATED]: (payload: Types.User) => void;
 	[Events.SESSION_EXISTS]: () => void;
 	[Events.USERNAME_TAKEN]: () => void;
-	[Events.USER_JOINED]: (data: { id: string; username: string }) => void;
-	[Events.USER_LEFT]: (data: { userId: string }) => void;
-	[Events.QUESTION_PROMPT]: (data: {
+	[Events.USER_JOINED]: (payload: Types.User) => void;
+	[Events.USER_LEFT]: (payload: Types.User) => void;
+	[Events.QUESTION_PROMPT]: (payload: {
 		question: Types.QuestionType;
 		index: number;
 		total: number;
 	}) => void;
-	[Events.GAME_OVER]: (data: { finalScores: Types.Score[] }) => void;
+	[Events.GAME_OVER]: (payload: { finalScores: Types.Score[] }) => void;
 	[Events.SESSION_CLOSED]: () => void;
+	[Events.ERROR]: (payload: {
+		message: string;
+	}) => void;
+	[Events.SESSION_CREATION_FAILED]: (payload: { message: string }) => void;
+	[Events.SESSION_NOT_FOUND]: () => void;
 }

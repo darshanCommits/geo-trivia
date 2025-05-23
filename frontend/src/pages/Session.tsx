@@ -2,58 +2,69 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SessionForm } from "@/components/SessionCard";
-import { useSessionStore, type SessionState } from "@/stores/sessionStore"; // your Zustand store
-import { useSocket } from "@/hooks/useSocket"; // assumed hook for isConnected, createSession, etc.
-import {
-	type SessionStateSetterType,
-	useSessionSocket,
-} from "@/hooks/useSessionSocket";
+import { useSessionStore } from "@/stores/sessionStore";
+import { useSession } from "@/hooks/useSession";
 
 export default function Session() {
 	const navigate = useNavigate();
-	const [tab, setTab] = useState("host");
+	const [tab, setTab] = useState<"host" | "join">("host");
 	const [formData, setFormData] = useState({ sessionId: "", username: "" });
+	const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
 
-	// Grab full session state as required by SessionState
-	const sessionState = useSessionStore();
+	const store = useSessionStore();
 
-	// Zustand setter accepting both partial object or updater function
-	const setSessionState = useSessionStore(
-		(state) => state.setSessionState,
-	) as SessionStateSetterType;
+	const setSessionState = store.setSessionState;
 
-	const { isConnected } = useSocket();
-
-	const { createSession, joinSession } = useSessionSocket({
-		sessionState,
-		setSessionState,
+	const { createSession, joinSession, isConnected } = useSession({
+		onSessionCreated: ({ sessionId, username }) => {
+			console.log({ server: sessionId });
+			console.log({ store: store.sessionId });
+			console.log(`${username} created the session ${sessionId}.`);
+			navigate({ to: "/lobby" });
+		},
+		onSessionExists: () => {
+			setStatus("error");
+			// alert("Session already exists. Try joining instead.");
+		},
+		onUsernameTaken: () => {
+			setStatus("error");
+			alert("Username already taken in this session.");
+		},
+		onUserJoined: ({ sessionId, username }) => {
+			console.log({ server: sessionId });
+			console.log({ store: store.sessionId });
+			setSessionState({ sessionId, username, isHost: false });
+			console.log({ server: sessionId });
+			console.log({ store: store.sessionId });
+			console.log(`${username} joined the session ${sessionId}.`);
+			navigate({ to: "/lobby" });
+		},
 	});
 
-	const updateSessionData = (field: string, value: string) => {
-		setFormData((prev) => ({ ...prev, [field]: value }));
-	};
+	// Handlers
+	const handleSubmit = () => {
+		if (!formData.sessionId || !formData.username) return;
 
-	const handleHostSubmit = () => {
-		const { sessionId, username } = formData;
-		if (sessionId && username && isConnected && !sessionState.isLoading) {
-			setSessionState({ sessionId, username, isHost: true });
-			createSession(sessionId, username);
-			navigate({ to: "/lobby", search: { sessionId } });
-		}
-	};
+		const sessionId = formData.sessionId;
+		const username = formData.username;
 
-	const handleJoinSubmit = () => {
-		const { sessionId, username } = formData;
-		if (sessionId && username && isConnected && !sessionState.isLoading) {
-			console.log("inside");
+		setSessionState({ sessionId, username });
+
+		if (tab === "host") {
+			createSession({ sessionId, username });
+		} else {
+			joinSession({ sessionId, username });
 			setSessionState({ sessionId, username, isHost: false });
-			joinSession(sessionId, username);
-			navigate({ to: "/lobby", search: { sessionId } });
 		}
 	};
+
 	return (
 		<div className="flex items-center justify-center h-screen bg-blue-50 pattern-background">
-			<Tabs value={tab} onValueChange={setTab} className="max-w-md">
+			<Tabs
+				value={tab}
+				onValueChange={(v) => setTab(v as "host" | "join")}
+				className="max-w-md"
+			>
 				<TabsList
 					className={`grid grid-cols-2 transition-colors ${
 						tab === "host" ? "bg-blue-200" : "bg-white"
@@ -68,11 +79,15 @@ export default function Session() {
 						title="Host a Session"
 						sessionId={formData.sessionId}
 						username={formData.username}
-						setSessionId={(val) => updateSessionData("sessionId", val)}
-						setUsername={(val) => updateSessionData("username", val)}
-						status={sessionState.status}
-						onSubmit={handleHostSubmit}
-						disabled={sessionState.isLoading || !isConnected}
+						setSessionId={(id) =>
+							setFormData((prev) => ({ ...prev, sessionId: id }))
+						}
+						setUsername={(name) =>
+							setFormData((prev) => ({ ...prev, username: name }))
+						}
+						status={status}
+						onSubmit={handleSubmit}
+						disabled={!isConnected || status === "loading"}
 					/>
 				</TabsContent>
 
@@ -81,11 +96,15 @@ export default function Session() {
 						title="Join a Session"
 						sessionId={formData.sessionId}
 						username={formData.username}
-						setSessionId={(val) => updateSessionData("sessionId", val)}
-						setUsername={(val) => updateSessionData("username", val)}
-						status={sessionState.status}
-						onSubmit={handleJoinSubmit}
-						disabled={sessionState.isLoading || !isConnected}
+						setSessionId={(id) =>
+							setFormData((prev) => ({ ...prev, sessionId: id }))
+						}
+						setUsername={(name) =>
+							setFormData((prev) => ({ ...prev, username: name }))
+						}
+						status={status}
+						onSubmit={handleSubmit}
+						disabled={!isConnected || status === "loading"}
 					/>
 				</TabsContent>
 			</Tabs>

@@ -1,53 +1,36 @@
 import { useEffect, useState } from "react";
-import { useSessionStore } from "@/stores/sessionStore"; // path to your session zustand store
-import {
-	type SessionStateSetterType,
-	useSessionSocket,
-} from "@/hooks/useSessionSocket"; // path to your session socket hook
-import { useGameEvents } from "@/hooks/useGameEvents"; // path to your game events hook
+import { useSessionStore } from "@/stores/sessionStore";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSession } from "@/hooks/useSession";
+import { useNavigate } from "@tanstack/react-router";
 
 export function GameLobby() {
-	const session = useSessionStore();
-	const { leaveSession } = useSessionSocket({
-		sessionState: session,
-		setSessionState: session.setSessionState as SessionStateSetterType,
+	const navigate = useNavigate();
+	const store = useSessionStore();
+	const setSessionState = store.setSessionState;
+
+	const { leaveSession } = useSession({
+		onUserLeave: ({ sessionId, username }) => {
+			console.log({ server: sessionId });
+			console.log({ store: store.sessionId });
+			console.log(`${username} left the session ${sessionId}.`);
+			navigate({ to: "/session" });
+		},
 	});
-	const { startGame, resetGame, isLoading: isGameLoading } = useGameEvents();
 	const [copied, setCopied] = useState(false);
 
-	// Effect to reset game state when entering the lobby
-	useEffect(() => {
-		// Reset game state if needed when returning to the lobby
-		// This is useful if a game ended and the host decided not to play again immediately.
-		// You might want to refine this logic based on your game flow.
-		if (session.sessionId) {
-			resetGame();
-		}
-	}, [session.sessionId, resetGame]);
-
-	useEffect(() => {
-		console.log("GameLobby - session.users:", session.users);
-	}, [session.users]);
-
 	const handleCopy = async () => {
-		if (session.sessionId) {
-			await navigator.clipboard.writeText(session.sessionId);
+		if (store.sessionId) {
+			await navigator.clipboard.writeText(store.sessionId);
 			setCopied(true);
 			setTimeout(() => setCopied(false), 2000);
 		}
 	};
 
-	if (!session.sessionId) {
-		// This component should only be rendered when a session is active
-		// You might want to navigate the user away or show a different message
-		return (
-			<div className="flex justify-center items-center h-screen text-xl text-gray-600">
-				No active session. Please create or join one.
-			</div>
-		);
-	}
+	useEffect(() => {
+		console.log(store.users);
+	}, [store.users]);
 
 	return (
 		<div className="flex flex-col items-center justify-between p-6 gap-6 pattern-background min-h-screen">
@@ -66,7 +49,7 @@ export function GameLobby() {
 								className="text-2xl font-bold text-blue-600 hover:underline focus:outline-none"
 								title="Click to copy"
 							>
-								{session.sessionId}
+								{store.sessionId}
 							</Button>
 							<p className="text-sm text-muted-foreground mt-1">
 								{copied ? "Copied!" : "Click to copy and share with others"}
@@ -74,9 +57,9 @@ export function GameLobby() {
 						</CardTitle>
 						<div className="text-sm text-center">
 							<p>
-								You are: <span className="font-medium">{session.username}</span>
+								You are: <span className="font-medium">{store.username}</span>
 							</p>
-							{session.isHost && (
+							{store.isHost && (
 								<p className="text-sm text-green-600">You're the host</p>
 							)}
 						</div>
@@ -86,9 +69,9 @@ export function GameLobby() {
 						<h2 className="text-lg font-semibold mb-2">Players Joined:</h2>
 						<hr className="my-2" />
 						<ol className="space-y-1 mb-4">
-							{session.users.map((user) => (
+							{store.users.map((user) => (
 								<li key={user.id} className="text-sm">
-									{user.username} {user.id === session.hostId && "(Host)"}
+									{user.username} {user.id === store.hostId && "(Host)"}
 								</li>
 							))}
 						</ol>
@@ -96,7 +79,13 @@ export function GameLobby() {
 						<div className="flex justify-between mt-4">
 							<Button
 								variant="default"
-								onClick={() => leaveSession()}
+								onClick={() => {
+									if (store.sessionId && store.username)
+										leaveSession({
+											sessionId: store.sessionId,
+											username: store.username,
+										});
+								}}
 								className="px-4"
 							>
 								Leave Session
@@ -105,31 +94,37 @@ export function GameLobby() {
 					</CardContent>
 				</Card>
 
-				{session.isHost && (
+				{store.isHost && (
 					<div className="mt-4 text-center">
 						<p className="text-sm text-muted-foreground mb-4">
-							{session.users.length < 2
+							{store.users.length < 2
 								? "Waiting for more players to join..."
 								: "You can now start the game!"}
 						</p>
 						<Button
 							size="lg"
 							className="px-10 py-6 text-xl"
-							onClick={() => startGame()}
-							disabled={session.users.length < 2 || isGameLoading}
+							onClick={() => {
+								// todo
+							}}
+							disabled={() => {
+								// todo
+							}}
 						>
-							{isGameLoading ? "Starting Game..." : "Start Game"}
+							{
+								(false ?? true) ? "Starting Game..." : "Start Game" // todo
+							}
 						</Button>
 					</div>
 				)}
 
-				{session.isLoading && (
+				{store.isLoading && (
 					<p className="text-center text-blue-600 mt-4">
-						{session.status || "Loading..."}
+						{store.status || "Loading..."}
 					</p>
 				)}
-				{session.error && (
-					<p className="text-center text-red-600 mt-4">{session.error}</p>
+				{store.error && (
+					<p className="text-center text-red-600 mt-4">{store.error}</p>
 				)}
 			</div>
 		</div>
