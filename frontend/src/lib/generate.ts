@@ -1,7 +1,3 @@
-export const generateSessionId = () => {
-	return Math.random().toString(36).substring(2, 8).toUpperCase();
-};
-
 export const generateUsername = () => {
 	const user = {
 		firstName: [
