@@ -14,31 +14,31 @@ import type {
 } from "@shared/types";
 
 export class TriviaGameClient {
-	private socket: ClientSocket<ServerToClientEvents, ClientToServerEvents>;
+	private _socket: ClientSocket<ServerToClientEvents, ClientToServerEvents>;
 	private currentUser?: User;
 	private messageCounter = 0;
 
 	constructor(url: string) {
-		this.socket = clientIo(url);
+		this._socket = clientIo(url);
 		this.setupEventHandlers();
 	}
 
 	private setupEventHandlers(): void {
-		this.socket.on("connect", () => {
-			console.log("Connected to server:", this.socket.id);
+		this._socket.on("connect", () => {
+			console.log("Connected to server:", this._socket.id);
 		});
 
-		this.socket.on("disconnect", () => {
+		this._socket.on("disconnect", () => {
 			console.log("Disconnected from server");
 		});
 
-		this.socket.on("error", (error: WSError) => {
+		this._socket.on("error", (error: WSError) => {
 			console.error("Socket error:", error);
 		});
 	}
 
 	private generateMessageId(): string {
-		return `${this.socket.id || "unknown"}-${++this.messageCounter}`;
+		return `${this._socket.id || "unknown"}-${++this.messageCounter}`;
 	}
 
 	private logRequest(entry: LogEntry): void {
@@ -64,7 +64,7 @@ export class TriviaGameClient {
 		});
 
 		return new Promise((resolve) => {
-			(this.socket as any).emit(
+			(this._socket as any).emit(
 				type,
 				payload,
 				(response: ClientResponse<T>) => {
@@ -80,12 +80,12 @@ export class TriviaGameClient {
 		});
 	}
 
-	// Register event handlers for server-initiated events
+	// Register event handlers for server-initiated events with logging
 	on<T extends ServerEventName>(
 		type: T,
 		handler: (data: ServerEvents[T]) => void,
 	): void {
-		this.socket.on(type as any, (data: ServerEvents[T]) => {
+		const wrappedHandler = (data: ServerEvents[T]) => {
 			this.logRequest({
 				direction: "receive",
 				event: type,
@@ -93,7 +93,9 @@ export class TriviaGameClient {
 				messageId: this.generateMessageId(),
 			});
 			handler(data);
-		});
+		};
+
+		this._socket.on(type as any, wrappedHandler);
 	}
 
 	// Remove event handler
@@ -102,21 +104,26 @@ export class TriviaGameClient {
 		handler?: (data: ServerEvents[T]) => void,
 	): void {
 		if (handler) {
-			this.socket.off(type, handler as any);
+			this._socket.off(type, handler as any);
 		} else {
-			this.socket.off(type as any);
+			this._socket.off(type as any);
 		}
+	}
+
+	// Expose socket for direct access if needed
+	get socket(): ClientSocket<ServerToClientEvents, ClientToServerEvents> {
+		return this._socket;
 	}
 
 	// Connection management
 	connect(): void {
-		if (!this.socket.connected) {
-			this.socket.connect();
+		if (!this._socket.connected) {
+			this._socket.connect();
 		}
 	}
 
 	disconnect(): void {
-		this.socket.disconnect();
+		this._socket.disconnect();
 		this.currentUser = undefined;
 	}
 
@@ -128,34 +135,32 @@ export class TriviaGameClient {
 
 		if (!this.isError(result)) {
 			this.currentUser = result.user;
+			// Room joining is handled automatically on the server side
 		}
 
 		return result;
 	}
 
-	async joinSession(
-		sessionId: string,
-		username: string,
-	): Promise<ClientResponse<"session:join">> {
-		const result = await this.request("session:join", { sessionId, username });
+	async joinSession(user: User): Promise<ClientResponse<"session:join">> {
+		const result = await this.request("session:join", user);
 
 		if (!this.isError(result)) {
-			this.currentUser = result.user;
+			this.currentUser = result;
+			// Room joining is handled automatically on the server side
 		}
 
 		return result;
 	}
 
 	async leaveSession(): Promise<ClientResponse<"session:leave">> {
-		if (!this.currentUser?.id) {
+		if (!this.currentUser) {
 			throw new Error("No user logged in");
 		}
 
-		const result = await this.request("session:leave", {
-			userId: this.currentUser.id,
-		});
+		const result = await this.request("session:leave", this.currentUser);
 
-		if (!this.isError(result) && result.success) {
+		if (!this.isError(result)) {
+			// Room leaving is handled automatically on the server side
 			this.currentUser = undefined;
 		}
 
@@ -163,33 +168,33 @@ export class TriviaGameClient {
 	}
 
 	async startGame(): Promise<ClientResponse<"game:start">> {
-		if (!this.currentUser?.id) {
+		if (!this.currentUser?.username) {
 			throw new Error("No user logged in");
 		}
 
 		return this.request("game:start", {
-			userId: this.currentUser.id,
+			username: this.currentUser.username,
 		});
 	}
 
 	async submitAnswer(answer: Answer): Promise<ClientResponse<"game:answer">> {
-		if (!this.currentUser?.id) {
+		if (!this.currentUser?.username) {
 			throw new Error("No user logged in");
 		}
 
 		return this.request("game:answer", {
-			userId: this.currentUser.id,
+			username: this.currentUser.username,
 			answer,
 		});
 	}
 
 	async skipQuestion(): Promise<ClientResponse<"game:skip">> {
-		if (!this.currentUser?.id) {
+		if (!this.currentUser?.username) {
 			throw new Error("No user logged in");
 		}
 
 		return this.request("game:skip", {
-			userId: this.currentUser.id,
+			username: this.currentUser.username,
 		});
 	}
 
@@ -199,11 +204,11 @@ export class TriviaGameClient {
 	}
 
 	get connected(): boolean {
-		return this.socket.connected;
+		return this._socket.connected;
 	}
 
 	get socketId(): string | undefined {
-		return this.socket.id;
+		return this._socket.id;
 	}
 
 	// Type guard for error checking

@@ -5,9 +5,6 @@ import { createUser } from "@backend/utils/lib";
 
 export const gameServer = new TriviaGameServer(server);
 
-// import { createUser } from "@backend/utils/lib";
-// import { gameServer } from ".";
-
 gameServer.handle("session:create", async (data, socket) => {
 	const user = createUser(data.username);
 
@@ -69,7 +66,10 @@ gameServer.handle("session:join", async (data, socket) => {
 
 	gameServer.broadcastToSession(user.sessionId, "session:user-joined", user);
 
-	return { user };
+	return {
+		user,
+		session,
+	};
 });
 
 gameServer.handle("session:leave", async (data, socket) => {

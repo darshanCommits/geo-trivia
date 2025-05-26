@@ -6,12 +6,12 @@ import {
 } from "@tanstack/react-router";
 
 import Home from "@/pages/home";
-import LoginPage from "@/pages/auth";
 import GamePage from "@/pages/game";
 import LeaderBoard from "@/pages/leaderboard";
 import Session from "@/pages/Session";
 import ShareSession from "@/components/ShareSession";
-import { GameLobby } from "./pages/gamelobby";
+import SessionPage from "./pages/session-new";
+import GameLobby from "./pages/gamelobby";
 
 const rootRoute = createRootRoute({
 	component: () => <Outlet />,
@@ -22,11 +22,6 @@ const routes = {
 		getParentRoute: () => rootRoute,
 		path: "/",
 		component: Home,
-	}),
-	auth: createRoute({
-		getParentRoute: () => rootRoute,
-		path: "auth",
-		component: LoginPage,
 	}),
 	game: createRoute({
 		getParentRoute: () => rootRoute,
@@ -41,21 +36,21 @@ const routes = {
 	session: createRoute({
 		getParentRoute: () => rootRoute,
 		path: "session",
-		component: Session,
+		component: SessionPage,
 	}),
 	lobby: createRoute({
 		getParentRoute: () => rootRoute,
 		path: "lobby",
 		component: GameLobby,
 	}),
-	shareSession: createRoute({
-		getParentRoute: () => rootRoute,
-		path: "share",
-		component: ShareSession,
-		validateSearch: (search) => ({
-			sessionId: String(search.sessionId || ""),
-		}),
-	}),
+	// shareSession: createRoute({
+	// 	getParentRoute: () => rootRoute,
+	// 	path: "share",
+	// 	component: ShareSession,
+	// 	validateSearch: (search) => ({
+	// 		sessionId: String(search.sessionId || ""),
+	// 	}),
+	// }),
 } as const;
 
 const routeTree = rootRoute.addChildren(Object.values(routes));

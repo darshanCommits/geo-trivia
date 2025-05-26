@@ -10,7 +10,6 @@ import type {
 	LogEntry,
 	WSError,
 	ClientResponse,
-	User,
 	GameSession,
 	SocketData,
 } from "@shared/types";
@@ -29,7 +28,7 @@ export class TriviaGameServer {
 			ServerToClientEvents,
 			any,
 			SocketData
-		>(server, { cors: { origin: "*" } });
+		>(server, { cors: { origin: "http://localhost:5173" } });
 		this.setupConnection();
 	}
 

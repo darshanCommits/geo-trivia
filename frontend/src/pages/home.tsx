@@ -1,11 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Section } from "@/components/ui/section";
 import TitleHeader from "@/components/ui/title-header";
-import { useSocket } from "@/hooks/useSocket";
 import { Link } from "@tanstack/react-router";
 
 export default function Home() {
-	const { socket, isConnected } = useSocket();
 	return (
 		<main className="bg-emerald-300 pattern-background min-h-screen flex flex-col items-center justify-center gap-16 px-6 py-12 text-center">
 			<TitleHeader
@@ -26,25 +24,12 @@ export default function Home() {
 				</div>
 
 				<div className="flex flex-col sm:flex-row gap-4 w-full justify-end">
-					<Link to="/auth">
+					<Link to="/session">
 						<Button size="lg" className="bg-red-400">
 							Login Now{" "}
 						</Button>
 					</Link>
 
-					<Button
-						size="lg"
-						className="bg-red-400"
-						onClick={() => {
-							if (socket?.connected) {
-								socket.disconnect();
-							} else {
-								socket?.connect();
-							}
-						}}
-					>
-						disconnect
-					</Button>
 					<Link to="/leaderboard">
 						<Button variant="neutral" size="lg">
 							Leaderboard

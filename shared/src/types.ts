@@ -74,12 +74,12 @@ export type ClientEvents = {
 	};
 
 	"session:join": {
-		request: { sessionId: string; username: string };
-		response: { user: User };
+		request: User;
+		response: { user: User; session: GameSession };
 	};
 
 	"session:leave": {
-		request: { sessionId: string; username: string };
+		request: User;
 		response: User; // so that client can update its state
 	};
 
