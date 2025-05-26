@@ -1,8 +1,6 @@
-// useUserJoinedListener.ts
 import { useEffect } from "react";
 import { useTriviaClient } from "@/provider/trivia.provider";
 import { useTriviaStore } from "@/stores/game.store";
-import { User } from "@shared/core.types";
 
 export function useUserJoinedListener() {
 	const client = useTriviaClient();

@@ -10,4 +10,6 @@ export type TriviaStore = {
 	reset: () => void;
 
 	addUser: (user: User) => void;
+	setGameStatus: (status: GameSession["status"]) => void;
+	setTotalQuestions: (count: number) => void;
 };

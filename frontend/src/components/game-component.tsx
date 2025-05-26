@@ -2,7 +2,7 @@ import { QuestionCard } from "@/components/ui/QuestionCard";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import Title from "@/components/ui/title-header";
-import type { QuestionType } from "@shared/types";
+import type { Question } from "@shared/core.types";
 
 GameComponent.defaultProps = {
 	total: 15,
@@ -13,7 +13,7 @@ export default function GameComponent(props: {
 	totalQuestions: number;
 	currentQuestionIndex: number;
 	onAnswer: (answer: number) => void;
-	questionData: QuestionType;
+	questionData: Question;
 	score: number;
 }) {
 	return (

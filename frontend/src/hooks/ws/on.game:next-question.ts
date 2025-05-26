@@ -3,31 +3,33 @@ import { useTriviaClient } from "@/provider/trivia.provider";
 import { useTriviaStore } from "@/stores/game.store";
 import type { ClientResponseWithError } from "@shared/events.types";
 
-export function useCreateSession() {
+export function useNextQuestion() {
 	const client = useTriviaClient();
-	const setState = useTriviaStore((s) => s.setState);
+	const addQuestion = useTriviaStore((s) => s.addQuestion); // assuming you have this action to store questions in client state
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 
-	const createSession = async (username: string): Promise<boolean> => {
+	const fetchNextQuestion = async (
+		sessionId: string,
+		currentQuestionNumber: number,
+	): Promise<boolean> => {
 		setError(null);
 		setIsLoading(true);
 
 		try {
-			const response: ClientResponseWithError<"session:create"> =
-				await client.request("session:create", {
-					username,
+			const response: ClientResponseWithError<"game:question-next"> =
+				await client.request("game:question-next", {
+					sessionId,
+					currentQuestionNumber,
 				});
-			console.log(response);
 
 			if (response.success) {
-				const { user, session } = response.data;
-				setState({ user, session });
+				addQuestion(response.data.question, response.data.questionNumber);
 				setIsLoading(false);
 				return true;
 			}
 
-			setError(response.error?.message ?? "Failed to create session");
+			setError(response.error?.message ?? "Failed to fetch question");
 			setIsLoading(false);
 			return false;
 		} catch (err) {
@@ -39,5 +41,5 @@ export function useCreateSession() {
 
 	const clearError = () => setError(null);
 
-	return { createSession, error, isLoading, clearError };
+	return { fetchNextQuestion, error, isLoading, clearError };
 }

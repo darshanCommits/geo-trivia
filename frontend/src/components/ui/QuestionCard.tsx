@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { accentColors } from "@/lib/colors";
-import type { QuestionType } from "@shared/types";
+import type { Question } from "@shared/core.types";
 import { useEffect, useState } from "react";
 
 const rotationClass = (index: number) => {
@@ -55,7 +55,7 @@ export const QuestionCard = ({
 	className,
 }: {
 	onAnswer: (answer: number) => void;
-	questionData: QuestionType;
+	questionData: Question;
 	currentQuestionIndex: number;
 	className?: string;
 }) => {
@@ -96,7 +96,7 @@ export const QuestionCard = ({
 				{questionData.timeout}
 			</span>
 			<CardContent className="my-4">
-				<h2 className="text-4xl font-semibold mb-8">{questionData.question}</h2>
+				<h2 className="text-4xl font-semibold mb-8">{questionData.text}</h2>
 				<div className="grid sm:grid-cols-2 gap-5">
 					{scrambledOptions.map((text, index) => {
 						// If 3 seconds have passed, show the correct option text
@@ -108,9 +108,7 @@ export const QuestionCard = ({
 							<Option
 								isDisabled={isScrambled}
 								className={`${rotationClass(index)} ${bgAccent(index)} ${
-									isScrambled
-										? "line-through "
-										: "opacity-100 no-underline"
+									isScrambled ? "line-through " : "opacity-100 no-underline"
 								} `}
 								key={String.fromCharCode(index + 65)}
 								index={index}

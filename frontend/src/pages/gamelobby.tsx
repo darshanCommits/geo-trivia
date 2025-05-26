@@ -6,6 +6,8 @@ import InstructionsCard from "./InstructionsCard";
 import { useTriviaStore } from "@/stores/game.store";
 import { Badge } from "@/components/ui/badge";
 import { useUserJoinedListener } from "@/hooks/listeners/on.session:user-joined";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 export default function GameLobby() {
 	useUserJoinedListener();
@@ -13,6 +15,8 @@ export default function GameLobby() {
 	const session = useTriviaStore((state) => state.session);
 
 	const [copied, setCopied] = useState(false);
+	const [region, setRegion] = useState("");
+	const [gameStarted, setGameStarted] = useState(false);
 
 	const handleCopySessionId = async () => {
 		if (session) {
@@ -54,6 +58,20 @@ export default function GameLobby() {
 					<PlayersList session={session} currentUser={user} />
 					<div className="space-y-4">
 						<InstructionsCard />
+
+						<div>
+							<label className="block text-white mb-1" htmlFor="region-input">
+								Region
+							</label>
+							<Input
+								id="region-input"
+								placeholder="Enter your region"
+								value={region}
+								onChange={(e) => setRegion(e.target.value)}
+							/>
+						</div>
+
+						<Button onClick={() => setGameStarted(true)}>Start Game</Button>
 					</div>
 				</div>
 			</div>

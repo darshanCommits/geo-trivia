@@ -1,5 +1,6 @@
 import { create, type StateCreator } from "zustand";
 import type { TriviaStore } from "./game.store.types";
+import type { GameSession } from "@shared/core.types";
 
 const defaults = {
 	user: null,
@@ -37,6 +38,18 @@ export const useTriviaStore = create<TriviaStore>(
 				error: null,
 				loading: false,
 			}),
+
+		setGameStatus: (status: GameSession["status"]) =>
+			set((state) => ({
+				...state,
+				gameStatus: status,
+			})),
+
+		setTotalQuestions: (count: number) =>
+			set((state) => ({
+				...state,
+				totalQuestions: count,
+			})),
 
 		addUser: (newUser) => {
 			const { session } = get();

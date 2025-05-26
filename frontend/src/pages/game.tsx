@@ -1,5 +1,4 @@
 import Star9 from "@/components/stars/s9";
-import type { QuestionType } from "@shared/types";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import GameComponent from "@/components/game-component";
@@ -8,6 +7,7 @@ import { LoadingPage } from "@/pages/loading";
 import { ErrorPage } from "@/pages/error";
 
 import fetchQuestions from "@/lib/fetchQuestions";
+import type { Question } from "@shared/core.types";
 // import { fetchQuestions } from "@/lib/fetchMockQue";
 
 export default function GamePage() {
@@ -19,7 +19,7 @@ export default function GamePage() {
 		data: questions,
 		isLoading,
 		error,
-	} = useQuery<QuestionType[]>({
+	} = useQuery<Question[]>({
 		queryKey: ["questions"],
 		queryFn: fetchQuestions,
 		retry: 2,
