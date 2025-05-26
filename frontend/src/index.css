@@ -74,6 +74,13 @@
     background-size: 75px 75px;
   }
 
+  .pattern-background-alt {
+    background-image:
+      linear-gradient(to right, rgba(200, 200, 200, 0.3) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(200, 200, 200, 0.3) 1px, transparent 1px);
+    background-size: 75px 75px;
+  }
+
   .pattern-move {
     animation: patternZigzag 4.5s linear infinite;
   }

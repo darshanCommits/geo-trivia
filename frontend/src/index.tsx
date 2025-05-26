@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "@tanstack/react-router";
 import { router } from "./router";
-import { TriviaGameProvider } from "@/provider/trivia.provider";
+import { TriviaClientProvider } from "@/provider/trivia.provider";
 
 // biome-ignore lint/style/noNonNullAssertion: <explanation>
 const rootElement = document.getElementById("root")!;
@@ -14,9 +14,9 @@ function Index() {
 	return (
 		<React.StrictMode>
 			<QueryClientProvider client={queryClient}>
-				<TriviaGameProvider serverUrl={serverUrl}>
+				<TriviaClientProvider serverUrl={serverUrl}>
 					<RouterProvider router={router} />
-				</TriviaGameProvider>
+				</TriviaClientProvider>
 				);
 			</QueryClientProvider>
 		</React.StrictMode>

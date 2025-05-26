@@ -191,7 +191,7 @@ export class TriviaGameServer {
 				sessionId,
 				host: session.hostUsername,
 				status: session.status,
-				players: session.players.map((p) => p.username),
+				players: session.users.map((p) => p.username),
 				currentQuestion: session.currentQuestion ?? "-",
 				maxPlayers: session.maxPlayers ?? "-",
 			})),
@@ -216,7 +216,7 @@ export class TriviaGameServer {
 			const {
 				sessionId,
 				hostUsername,
-				players,
+				users: players,
 				status,
 				currentQuestion,
 				maxPlayers,

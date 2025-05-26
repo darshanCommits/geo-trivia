@@ -8,32 +8,30 @@ import {
 } from "@/components/ui/card";
 import { SessionTabs } from "@/components/SessionTabs";
 import { Gamepad2 } from "lucide-react";
-import { useTriviaGame } from "@/provider/trivia.provider";
 import { useNavigate } from "@tanstack/react-router";
+import { useCreateSession } from "@/hooks/ws/on.session:create";
+import { useJoinSession } from "@/hooks/ws/on.session:join";
+import { useTriviaStore } from "@/stores/game.store";
 
 export default function SessionPage() {
-	const { loading, error, createSession, joinSession, clearError } =
-		useTriviaGame();
 	const navigate = useNavigate();
+	const createSession = useCreateSession();
+	const joinSession = useJoinSession();
 
-	const [createUsername, setCreateUsername] = useState("");
-	const [joinUsername, setJoinUsername] = useState("");
-	const [joinSessionId, setJoinSessionId] = useState("");
+	const [username, setUsername] = useState("");
+	const [sessionId, setSessionId] = useState("");
 
 	const handleCreateSession = async () => {
-		if (!createUsername.trim()) return;
-		clearError();
-		await createSession(createUsername.trim());
+		if (!username.trim()) return;
+		createSession(username);
+
 		navigate({ to: "/lobby" });
 	};
 
 	const handleJoinSession = async () => {
-		if (!joinUsername.trim() || !joinSessionId.trim()) return;
-		clearError();
-		await joinSession({
-			username: joinUsername.trim(),
-			sessionId: joinSessionId.trim(),
-		});
+		if (!username.trim() || !sessionId.trim()) return;
+		joinSession(username, sessionId);
+
 		navigate({ to: "/lobby" });
 	};
 
@@ -55,16 +53,13 @@ export default function SessionPage() {
 					</CardHeader>
 					<CardContent>
 						<SessionTabs
-							error={error}
-							loading={loading}
-							createUsername={createUsername}
-							setCreateUsername={setCreateUsername}
+							username={username}
+							setUsername={setUsername}
+							sessionId={sessionId}
+							setSessionId={setSessionId}
 							handleCreateSession={handleCreateSession}
-							joinUsername={joinUsername}
-							setJoinUsername={setJoinUsername}
-							joinSessionId={joinSessionId}
-							setJoinSessionId={setJoinSessionId}
 							handleJoinSession={handleJoinSession}
+							loading={false}
 						/>
 					</CardContent>
 				</Card>

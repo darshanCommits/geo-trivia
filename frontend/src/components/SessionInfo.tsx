@@ -6,8 +6,16 @@ import {
 	CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import type { GameSession } from "@shared/core.types";
 
-export default function SessionInfoCard({ session, copied, onCopy }) {
+type Props = {
+	sessionId: string;
+	copied: boolean;
+	onCopy: () => void;
+};
+
+export default function SessionInfoCard({ sessionId, copied, onCopy }: Props) {
+	console.log(sessionId);
 	return (
 		<Card className="mb-6 bg-white/95 backdrop-blur-sm shadow-2xl">
 			<CardHeader>
@@ -15,7 +23,7 @@ export default function SessionInfoCard({ session, copied, onCopy }) {
 					<div>
 						<CardTitle className="flex items-center gap-2">
 							<Users className="h-5 w-5" />
-							Session: {session.id}
+							Session: {sessionId}
 						</CardTitle>
 						<CardDescription>
 							Share this ID with friends to let them join

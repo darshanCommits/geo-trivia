@@ -17,6 +17,7 @@ export type ClientRequest<T extends ClientEventName> = WSMessage<
 export type ClientResponse<T extends ClientEventName> =
 	| ClientEvents[T]["response"]
 	| WSError;
+
 export type ServerBroadcast<T extends ServerEventName> = WSMessage<
 	T,
 	ServerEvents[T]

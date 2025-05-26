@@ -15,7 +15,7 @@ gameServer.handle("session:create", async (data, socket) => {
 		sessionId: generateSessionId(),
 		hostUsername: user.username,
 		status: "waiting",
-		players: [user],
+		users: [user],
 	};
 
 	gameServer.sessions.set(session.sessionId, session);
@@ -52,7 +52,7 @@ gameServer.handle("session:join", async (data, socket) => {
 		throw new Error("session_not_found");
 	}
 
-	if (session.players.find((u) => u.username === user.username)) {
+	if (session.users.find((u) => u.username === user.username)) {
 		gameServer.emit(socket, "session:join-failed", {
 			reason: "username_taken",
 			message: "Username is already taken by somebody else",
@@ -60,7 +60,7 @@ gameServer.handle("session:join", async (data, socket) => {
 		throw new Error("username_taken");
 	}
 
-	session.players.push(user);
+	session.users.push(user);
 	gameServer.setSocketData(socket, {
 		user,
 		session,
@@ -70,7 +70,6 @@ gameServer.handle("session:join", async (data, socket) => {
 	gameServer.logSocketData("joinRoom", socket.data);
 
 	gameServer.broadcastToSession(data.sessionId, "session:user-joined", user);
-	console.log("join par ye send kr rha hu", { user, session });
 
 	return {
 		user,
@@ -100,7 +99,7 @@ gameServer.handle("session:leave", async (data, socket) => {
 	gameServer.logSocketData("leaveRoom", socket.data);
 
 	// Remove the leaving user from the players list
-	session.players = session.players.filter((u) => u.username !== data.username);
+	session.users = session.users.filter((u) => u.username !== data.username);
 
 	// If host is leaving, broadcast session deleted and remove session
 	if (session.hostUsername === data.username) {
@@ -118,7 +117,7 @@ gameServer.handle("session:leave", async (data, socket) => {
 	gameServer.broadcastToSession(data.sessionId, "session:user-left", data);
 
 	// If no players remain, delete session
-	if (session.players.length === 0) {
+	if (session.users.length === 0) {
 		gameServer.broadcastToSession(data.sessionId, "session:deleted", {
 			sessionId: data.sessionId,
 			reason: "No Players Remaining",

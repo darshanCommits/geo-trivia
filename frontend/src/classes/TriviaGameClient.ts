@@ -1,16 +1,14 @@
 import { io as clientIo, type Socket as ClientSocket } from "socket.io-client";
+import type { User } from "@shared/core.types";
+import type { ClientEvents, ServerEvents, WSError } from "@shared/events.types";
+import type { LogEntry } from "@shared/log.types";
 import type {
-	User,
-	Answer,
-	ClientEvents,
-	ServerEvents,
 	ClientEventName,
 	ServerEventName,
 	ClientResponse,
-	WSError,
-	LogEntry,
 	ServerToClientEvents,
 	ClientToServerEvents,
+	ClientEventHandler,
 } from "@shared/types";
 
 export class TriviaGameClient {
@@ -53,9 +51,8 @@ export class TriviaGameClient {
 	async request<T extends ClientEventName>(
 		type: T,
 		payload: ClientEvents[T]["request"],
-	): Promise<ClientResponse<T>> {
+	): Promise<ClientEvents[T]["response"]> {
 		const messageId = this.generateMessageId();
-
 		this.logRequest({
 			direction: "send",
 			event: type,
@@ -64,49 +61,44 @@ export class TriviaGameClient {
 		});
 
 		return new Promise((resolve) => {
-			(this._socket as any).emit(
-				type,
-				payload,
-				(response: ClientResponse<T>) => {
-					this.logRequest({
-						direction: "response",
-						event: type,
-						data: response,
-						messageId,
-					});
-					resolve(response);
-				},
-			);
+			this._socket.emit(type, payload, (response: ClientResponse<T>) => {
+				this.logRequest({
+					direction: "response",
+					event: type,
+					data: response,
+					messageId,
+				});
+				resolve(response);
+			});
 		});
 	}
 
 	// Register event handlers for server-initiated events with logging
 	on<T extends ServerEventName>(
-		type: T,
+		event: T,
 		handler: (data: ServerEvents[T]) => void,
 	): void {
 		const wrappedHandler = (data: ServerEvents[T]) => {
 			this.logRequest({
 				direction: "receive",
-				event: type,
+				event: event,
 				data,
 				messageId: this.generateMessageId(),
 			});
 			handler(data);
 		};
-
-		this._socket.on(type as any, wrappedHandler);
+		this._socket.on(event, wrappedHandler);
 	}
 
-	// Remove event handler
+	// Remove event handler for server events
 	off<T extends ServerEventName>(
 		type: T,
 		handler?: (data: ServerEvents[T]) => void,
 	): void {
 		if (handler) {
-			this._socket.off(type, handler as any);
+			this._socket.off(type, handler);
 		} else {
-			this._socket.off(type as any);
+			this._socket.off(type);
 		}
 	}
 
@@ -127,81 +119,6 @@ export class TriviaGameClient {
 		this.currentUser = undefined;
 	}
 
-	// Convenience methods for common operations
-	async createSession(
-		username: string,
-	): Promise<ClientResponse<"session:create">> {
-		const result = await this.request("session:create", { username });
-
-		if (!this.isError(result)) {
-			this.currentUser = result.user;
-			// Room joining is handled automatically on the server side
-		}
-
-		return result;
-	}
-
-	// Fixed joinSession method - takes username and sessionId
-	async joinSession(
-		username: string,
-		sessionId: string,
-	): Promise<ClientResponse<"session:join">> {
-		const result = await this.request("session:join", { username, sessionId });
-
-		if (!this.isError(result)) {
-			this.currentUser = result.user;
-			// Room joining is handled automatically on the server side
-		}
-
-		return result;
-	}
-
-	async leaveSession(): Promise<ClientResponse<"session:leave">> {
-		if (!this.currentUser) {
-			throw new Error("No user logged in");
-		}
-
-		const result = await this.request("session:leave", this.currentUser);
-
-		if (!this.isError(result)) {
-			// Room leaving is handled automatically on the server side
-			this.currentUser = undefined;
-		}
-
-		return result;
-	}
-
-	async startGame(): Promise<ClientResponse<"game:start">> {
-		if (!this.currentUser?.username) {
-			throw new Error("No user logged in");
-		}
-
-		return this.request("game:start", {
-			username: this.currentUser.username,
-		});
-	}
-
-	async submitAnswer(answer: Answer): Promise<ClientResponse<"game:answer">> {
-		if (!this.currentUser?.username) {
-			throw new Error("No user logged in");
-		}
-
-		return this.request("game:answer", {
-			username: this.currentUser.username,
-			answer,
-		});
-	}
-
-	async skipQuestion(): Promise<ClientResponse<"game:skip">> {
-		if (!this.currentUser?.username) {
-			throw new Error("No user logged in");
-		}
-
-		return this.request("game:skip", {
-			username: this.currentUser.username,
-		});
-	}
-
 	// Getters
 	get user(): User | undefined {
 		return this.currentUser;
@@ -215,10 +132,8 @@ export class TriviaGameClient {
 		return this._socket.id;
 	}
 
-	// Type guard for error checking
-	private isError(response: unknown): response is WSError {
-		return (
-			typeof response === "object" && response !== null && "error" in response
-		);
+	// Helper method to set current user (you might want to call this after successful login)
+	setCurrentUser(user: User): void {
+		this.currentUser = user;
 	}
 }

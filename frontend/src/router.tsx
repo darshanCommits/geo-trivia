@@ -42,14 +42,6 @@ const routes = {
 		path: "lobby",
 		component: GameLobby,
 	}),
-	// shareSession: createRoute({
-	// 	getParentRoute: () => rootRoute,
-	// 	path: "share",
-	// 	component: ShareSession,
-	// 	validateSearch: (search) => ({
-	// 		sessionId: String(search.sessionId || ""),
-	// 	}),
-	// }),
 } as const;
 
 const routeTree = rootRoute.addChildren(Object.values(routes));
