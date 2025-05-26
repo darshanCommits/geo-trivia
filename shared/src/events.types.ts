@@ -47,8 +47,19 @@ export type ClientEvents = {
 
 	// Game Flow
 	"game:start": {
-		request: { username: string };
-		response: { session: GameSession }; // it will send active status
+		request: { sessionId: string; region: string };
+		response: { status: GameSession["status"]; totalQuestions: number }; // it will send active status
+	};
+
+	"game:question-next": {
+		request: {
+			sessionId: string;
+			currentQuestionNumber: number;
+		};
+		response: {
+			question: Omit<Question, "correctAnswer">;
+			questionNumber: number;
+		};
 	};
 
 	"game:answer": {
@@ -66,6 +77,7 @@ export type GameErrorEvents = {
 	"game:start-failed": {
 		reason:
 			| "insufficient_players"
+			| "unable_to_fetch_question"
 			| "game_already_started"
 			| "not_host"
 			| "session_not_found";
@@ -124,7 +136,7 @@ export type ServerEvents = GameEvents &
 
 // Server-to-Client Events (broadcasts)
 export type GameEvents = GameErrorEvents & {
-	"game:question": {
+	"game:question-next": {
 		question: Omit<Question, "correctAnswer">;
 		questionNumber: number;
 		totalQuestions: number;

@@ -5,6 +5,7 @@
 export type SocketData = {
 	user?: User;
 	session?: GameSession;
+	activeGameQuestions?: Question[];
 };
 
 export type User = {
@@ -23,11 +24,12 @@ export type GameSession = {
 };
 
 export type Question = {
-	index: number;
+	index?: number; // this is for client only, server will send but not store
 	text: string;
 	options: string[];
 	correctAnswer: number;
-	timeLimit: number;
+	region: string;
+	timeout: number;
 };
 
 export type Answer = {
