@@ -1,30 +1,31 @@
-import type { GameSession, User } from "@shared/types";
+import type { GameSession, User } from "@shared/core.types";
 import { server } from "../http.server";
 import { TriviaGameServer } from "./TriviaGameServer";
-import { createUser } from "@backend/utils/lib";
+import { generateSessionId } from "@backend/utils/lib";
 
 export const gameServer = new TriviaGameServer(server);
 
 gameServer.handle("session:create", async (data, socket) => {
-	const user = createUser(data.username);
+	const user: User = {
+		username: data.username,
+		score: 0,
+	};
 
 	const session: GameSession = {
-		id: user.sessionId,
+		sessionId: generateSessionId(),
 		hostUsername: user.username,
 		status: "waiting",
 		players: [user],
 	};
 
+	gameServer.sessions.set(session.sessionId, session);
 	gameServer.setSocketData(socket, {
+		user,
 		session,
 	});
 
-	gameServer.sessions.set(user.sessionId, session);
-	gameServer.logSocketData("createRoom", socket.data);
-
-	socket.join(user.sessionId);
-
-	gameServer.broadcastToSession(user.sessionId, "session:user-joined", user);
+	socket.join(session.sessionId);
+	gameServer.broadcastToSession(session.sessionId, "session:user-joined", user);
 
 	return {
 		user,
@@ -33,8 +34,12 @@ gameServer.handle("session:create", async (data, socket) => {
 });
 
 gameServer.handle("session:join", async (data, socket) => {
-	const user = createUser(data.username, data.sessionId);
-	const session = gameServer.sessions.get(user.sessionId);
+	const user: User = {
+		username: data.username,
+		score: 0,
+	};
+
+	const session = gameServer.sessions.get(data.sessionId);
 
 	gameServer.logSocketData("joinRoom", socket.data);
 
@@ -42,7 +47,7 @@ gameServer.handle("session:join", async (data, socket) => {
 		gameServer.emit(socket, "session:join-failed", {
 			reason: "session_not_found",
 			message: "The requested session could not be found",
-			sessionId: user.sessionId,
+			sessionId: data.sessionId,
 		});
 		throw new Error("session_not_found");
 	}
@@ -61,10 +66,10 @@ gameServer.handle("session:join", async (data, socket) => {
 		session,
 	});
 
-	socket.join(user.sessionId);
+	socket.join(data.sessionId);
 	gameServer.logSocketData("joinRoom", socket.data);
 
-	gameServer.broadcastToSession(user.sessionId, "session:user-joined", user);
+	gameServer.broadcastToSession(data.sessionId, "session:user-joined", user);
 	console.log("join par ye send kr rha hu", { user, session });
 
 	return {
@@ -74,8 +79,7 @@ gameServer.handle("session:join", async (data, socket) => {
 });
 
 gameServer.handle("session:leave", async (data, socket) => {
-	const user: User = data;
-	const session = gameServer.sessions.get(user.sessionId);
+	const session = gameServer.sessions.get(data.sessionId);
 
 	if (!session) {
 		gameServer.emit(socket, "session:leave-failed", {
@@ -85,7 +89,7 @@ gameServer.handle("session:leave", async (data, socket) => {
 		throw new Error("session_not_found");
 	}
 
-	if (!user.username) {
+	if (!data.username) {
 		gameServer.emit(socket, "session:leave-failed", {
 			reason: "user_not_found",
 			message: "User not found.",
@@ -96,31 +100,32 @@ gameServer.handle("session:leave", async (data, socket) => {
 	gameServer.logSocketData("leaveRoom", socket.data);
 
 	// Remove the leaving user from the players list
-	session.players = session.players.filter((u) => u.username !== user.username);
+	session.players = session.players.filter((u) => u.username !== data.username);
 
 	// If host is leaving, broadcast session deleted and remove session
-	if (session.hostUsername === user.username) {
-		gameServer.broadcastToSession(user.sessionId, "session:deleted", {
-			sessionId: user.sessionId,
+	if (session.hostUsername === data.username) {
+		gameServer.broadcastToSession(data.sessionId, "session:deleted", {
+			sessionId: data.sessionId,
 			reason: "host_left",
 		});
-		gameServer.sessions.delete(user.sessionId);
+		gameServer.sessions.delete(data.sessionId);
 		gameServer.setSocketData(socket, {});
-		return user;
+
+		return data;
 	}
 
 	// If non-host is leaving
-	gameServer.broadcastToSession(user.sessionId, "session:user-left", user);
+	gameServer.broadcastToSession(data.sessionId, "session:user-left", data);
 
 	// If no players remain, delete session
 	if (session.players.length === 0) {
-		gameServer.broadcastToSession(user.sessionId, "session:deleted", {
-			sessionId: user.sessionId,
+		gameServer.broadcastToSession(data.sessionId, "session:deleted", {
+			sessionId: data.sessionId,
 			reason: "No Players Remaining",
 		});
-		gameServer.sessions.delete(user.sessionId);
+		gameServer.sessions.delete(data.sessionId);
 	}
 
 	gameServer.setSocketData(socket, {});
-	return user;
+	return data;
 });

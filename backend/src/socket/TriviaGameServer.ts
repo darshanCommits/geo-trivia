@@ -5,14 +5,11 @@ import type {
 	ServerEventName,
 	ClientToServerEvents,
 	ServerToClientEvents,
-	ClientEvents,
-	ServerEvents,
-	LogEntry,
-	WSError,
 	ClientResponse,
-	GameSession,
-	SocketData,
 } from "@shared/types";
+import type { GameSession, SocketData } from "@shared/core.types";
+import type { ClientEvents, ServerEvents, WSError } from "@shared/events.types";
+import type { LogEntry } from "@shared/log.types";
 type SessionId = string;
 
 export class TriviaGameServer {
@@ -204,20 +201,28 @@ export class TriviaGameServer {
 	logSocketData(from: string, data: Partial<SocketData>) {
 		console.log(`\n[Socket Data from ${from}]`);
 
-		if (data.user) {
-			const { username, sessionId, score, id } = data.user;
+		if (data.user && data.session) {
+			const { username, score } = data.user;
+			const { sessionId } = data.session;
+
 			console.log(
-				`User: ${username} (id: ${id ?? "<none>"}), Session: ${sessionId}, Score: ${score ?? 0}`,
+				`User: ${username} , Session: ${sessionId}, Score: ${score ?? 0}`,
 			);
 		} else {
 			console.log("User: <none>");
 		}
 
 		if (data.session) {
-			const { id, hostUsername, players, status, currentQuestion, maxPlayers } =
-				data.session;
+			const {
+				sessionId,
+				hostUsername,
+				players,
+				status,
+				currentQuestion,
+				maxPlayers,
+			} = data.session;
 
-			console.log(`Session ID: ${id}`);
+			console.log(`Session ID: ${sessionId}`);
 			console.log(`Host: ${hostUsername}`);
 			console.log(`Status: ${status}`);
 			console.log(`Players: ${players.map((x) => x.username)}`);
