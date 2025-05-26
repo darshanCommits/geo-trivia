@@ -5,6 +5,7 @@ import type {
 	Question,
 	User,
 } from "./core.types";
+import type { ClientEventName } from "./types";
 
 // ============================================================================
 // WEBSOCKET MESSAGE STRUCTURE
@@ -18,7 +19,8 @@ export type WSMessage<T extends string, D = unknown> = {
 };
 
 export type WSError = {
-	error: string;
+	message?: string;
+	reason?: string;
 };
 
 // ============================================================================
@@ -83,7 +85,7 @@ export type GameErrorEvents = {
 	};
 };
 
-type SessionErrorEvents = {
+export type SessionErrorEvents = {
 	"session:create-failed": {
 		reason: "session_exists" | "invalid_username" | "server_error";
 		message: string;
@@ -95,13 +97,14 @@ type SessionErrorEvents = {
 			| "session_full"
 			| "invalid_session";
 		message: string;
-		sessionId?: string;
 	};
 	"session:leave-failed": {
 		reason: "user_not_found" | "session_not_found";
 		message: string;
 	};
 };
+
+export type ServerErrorEvents = SessionErrorEvents & GameErrorEvents;
 
 type SessionEvents = SessionErrorEvents & {
 	"session:user-joined": User;
@@ -135,3 +138,32 @@ export type GameEvents = GameErrorEvents & {
 
 	"game:finished": Leaderboard;
 };
+
+type ErrorEventForClientEvent<K extends ClientEventName> =
+	K extends `game:start`
+		? GameErrorEvents["game:start-failed"]
+		: K extends `game:answer`
+			? GameErrorEvents["game:answer-failed"]
+			: K extends `game:skip`
+				? GameErrorEvents["game:skip-failed"]
+				: K extends `session:create`
+					? SessionErrorEvents["session:create-failed"]
+					: K extends `session:join`
+						? SessionErrorEvents["session:join-failed"]
+						: K extends `session:leave`
+							? SessionErrorEvents["session:leave-failed"]
+							: never;
+
+export type ClientSuccessResponse<K extends ClientEventName> = {
+	success: true;
+	data: ClientEvents[K]["response"];
+};
+
+export type ClientErrorResponse<K extends ClientEventName> = {
+	success: false;
+	error: ErrorEventForClientEvent<K> | WSError;
+};
+
+export type ClientResponseWithError<K extends ClientEventName> =
+	| ClientSuccessResponse<K>
+	| ClientErrorResponse<K>;

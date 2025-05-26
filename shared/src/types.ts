@@ -1,9 +1,4 @@
-import type {
-	ClientEvents,
-	ServerEvents,
-	WSError,
-	WSMessage,
-} from "./events.types";
+import type { ClientEvents, ServerEvents, WSMessage } from "./events.types";
 
 export type ClientEventName = keyof ClientEvents;
 export type ServerEventName = keyof ServerEvents;
@@ -15,8 +10,7 @@ export type ClientRequest<T extends ClientEventName> = WSMessage<
 	ClientEvents[T]["request"]
 >;
 export type ClientResponse<T extends ClientEventName> =
-	| ClientEvents[T]["response"]
-	| WSError;
+	ClientEvents[T]["response"];
 
 export type ServerBroadcast<T extends ServerEventName> = WSMessage<
 	T,

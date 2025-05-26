@@ -5,10 +5,15 @@ import type {
 	ServerEventName,
 	ClientToServerEvents,
 	ServerToClientEvents,
-	ClientResponse,
 } from "@shared/types";
 import type { GameSession, SocketData } from "@shared/core.types";
-import type { ClientEvents, ServerEvents, WSError } from "@shared/events.types";
+import type {
+	ClientEvents,
+	ClientResponseWithError,
+	ServerErrorEvents,
+	ServerEvents,
+	WSError,
+} from "@shared/events.types";
 import type { LogEntry } from "@shared/log.types";
 type SessionId = string;
 
@@ -46,46 +51,77 @@ export class TriviaGameServer {
 		handler: (
 			data: ClientEvents[K]["request"],
 			socket: Socket,
-		) => Promise<ClientEvents[K]["response"]>,
+		) => Promise<ClientResponseWithError<K>>,
 	) {
 		this.onConnection((socket) => {
-			socket.on(
-				event,
-				async (
-					payload: ClientEvents[K]["request"],
-					cb: (resp: ClientResponse<K>) => void,
-				) => {
-					try {
-						const response = await handler(payload, socket);
-						cb(response);
-					} catch (error) {
-						console.error(`Error handling ${event} on ${socket.id}:`, error);
-
-						let err: WSError;
-
-						if (
-							typeof error === "object" &&
-							error !== null &&
-							"error" in error
-						) {
-							err = error as WSError;
-						} else if (error instanceof Error) {
-							// Use the error message from the thrown Error
-							err = {
-								error: error.message,
-							};
-						} else {
-							// Fallback generic error message
-							err = {
-								error: "Internal server error",
-							};
-						}
-
-						cb(err);
-					}
-				},
-			);
+			socket.on(event, this.createEventHandler(event, handler, socket));
 		});
+	}
+
+	/**
+	 * Creates the actual event handler function with error handling and response processing
+	 */
+	private createEventHandler<K extends ClientEventName>(
+		event: K,
+		handler: (
+			data: ClientEvents[K]["request"],
+			socket: Socket,
+		) => Promise<ClientResponseWithError<K>>,
+		socket: Socket,
+	) {
+		return async (
+			payload: ClientEvents[K]["request"],
+			cb: (resp: ClientResponseWithError<K>) => void,
+		) => {
+			try {
+				const response = await handler(payload, socket);
+				this.processResponse(socket, event, response);
+				cb(response);
+			} catch (error) {
+				const errorResponse = this.handleEventError(socket, error);
+				cb(errorResponse);
+			}
+		};
+	}
+
+	/**
+	 * Processes the response from an event handler
+	 */
+	private processResponse<K extends ClientEventName>(
+		socket: Socket,
+		event: K,
+		response: ClientResponseWithError<K>,
+	): void {
+		// If response is an error object, emit it automatically
+		if (this.isErrorResponse(response)) {
+			this.emit(
+				socket,
+				`${event}-failed` as keyof ServerErrorEvents,
+				response as any,
+			);
+		}
+	}
+
+	/**
+	 * Checks if a response is an error response
+	 */
+	private isErrorResponse<K extends ClientEventName>(
+		response: ClientResponseWithError<K>,
+	): boolean {
+		return "error" in response || "reason" in response;
+	}
+
+	/**
+	 * Handles errors that occur during event processing
+	 */
+	private handleEventError(socket: Socket, error: unknown): WSError {
+		const err: WSError =
+			error instanceof Error
+				? { reason: error.message }
+				: { reason: "Internal server error" };
+
+		this.emit(socket, "error", err);
+		return err;
 	}
 
 	private setupConnection() {

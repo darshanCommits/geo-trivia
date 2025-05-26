@@ -11,28 +11,44 @@ import { Gamepad2 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useCreateSession } from "@/hooks/ws/on.session:create";
 import { useJoinSession } from "@/hooks/ws/on.session:join";
-import { useTriviaStore } from "@/stores/game.store";
 
 export default function SessionPage() {
 	const navigate = useNavigate();
-	const createSession = useCreateSession();
-	const joinSession = useJoinSession();
-
+	const { createSession } = useCreateSession();
+	const {
+		joinSession,
+		error: joinError,
+		isLoading,
+		clearError,
+	} = useJoinSession();
 	const [username, setUsername] = useState("");
 	const [sessionId, setSessionId] = useState("");
 
 	const handleCreateSession = async () => {
 		if (!username.trim()) return;
 		createSession(username);
-
 		navigate({ to: "/lobby" });
 	};
 
 	const handleJoinSession = async () => {
 		if (!username.trim() || !sessionId.trim()) return;
-		joinSession(username, sessionId);
 
-		navigate({ to: "/lobby" });
+		const success = await joinSession(username, sessionId);
+		if (success) {
+			navigate({ to: "/lobby" });
+		}
+		// If not successful, error will be shown via joinError
+	};
+
+	// Clear error when user starts typing (optional UX improvement)
+	const handleUsernameChange = (value: string) => {
+		setUsername(value);
+		if (joinError) clearError();
+	};
+
+	const handleSessionIdChange = (value: string) => {
+		setSessionId(value);
+		if (joinError) clearError();
 	};
 
 	return (
@@ -43,7 +59,6 @@ export default function SessionPage() {
 					<h1 className="text-3xl font-bold mb-2">Trivia Game</h1>
 					<p className="text-gray-700">Join or create a game session</p>
 				</div>
-
 				<Card className="bg-white/95 backdrop-blur-sm shadow-2xl">
 					<CardHeader>
 						<CardTitle className="text-center">Game Session</CardTitle>
@@ -54,13 +69,18 @@ export default function SessionPage() {
 					<CardContent>
 						<SessionTabs
 							username={username}
-							setUsername={setUsername}
+							setUsername={handleUsernameChange}
 							sessionId={sessionId}
-							setSessionId={setSessionId}
+							setSessionId={handleSessionIdChange}
 							handleCreateSession={handleCreateSession}
 							handleJoinSession={handleJoinSession}
-							loading={false}
+							loading={isLoading}
 						/>
+						{joinError && (
+							<div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-md">
+								<p className="text-red-600 text-sm">{joinError.message}</p>
+							</div>
+						)}
 					</CardContent>
 				</Card>
 			</div>

@@ -1,6 +1,11 @@
 import { io as clientIo, type Socket as ClientSocket } from "socket.io-client";
 import type { User } from "@shared/core.types";
-import type { ClientEvents, ServerEvents, WSError } from "@shared/events.types";
+import type {
+	ClientEvents,
+	ClientResponseWithError,
+	ServerEvents,
+	WSError,
+} from "@shared/events.types";
 import type { LogEntry } from "@shared/log.types";
 import type {
 	ClientEventName,
@@ -51,8 +56,9 @@ export class TriviaGameClient {
 	async request<T extends ClientEventName>(
 		type: T,
 		payload: ClientEvents[T]["request"],
-	): Promise<ClientEvents[T]["response"]> {
+	): Promise<ClientResponseWithError<T>> {
 		const messageId = this.generateMessageId();
+
 		this.logRequest({
 			direction: "send",
 			event: type,
@@ -61,15 +67,53 @@ export class TriviaGameClient {
 		});
 
 		return new Promise((resolve) => {
-			this._socket.emit(type, payload, (response: ClientResponse<T>) => {
-				this.logRequest({
-					direction: "response",
-					event: type,
-					data: response,
-					messageId,
+			this._socket
+				.timeout(5000)
+				.emit(type, payload, (err: Error | null, response: any) => {
+					this.logRequest({
+						direction: "response",
+						event: type,
+						data: response,
+						messageId,
+					});
+
+					// Handle timeout or server error callback
+					if (err) {
+						return resolve({
+							success: false,
+							error: {
+								message: err.message || "Server did not respond",
+								reason: "timeout_or_network_error",
+							},
+						});
+					}
+
+					// Validate response shape
+					if (typeof response === "object" && response !== null) {
+						if (response.success === true) {
+							return resolve({ success: true, data: response.data });
+						}
+
+						if (response.success === false) {
+							return resolve({
+								success: false,
+								error: response.error ?? {
+									message: "Unknown error",
+									reason: "unknown_error",
+								},
+							});
+						}
+					}
+
+					// Fallback for invalid or unexpected response
+					return resolve({
+						success: false,
+						error: {
+							message: "Malformed or invalid response",
+							reason: "malformed_response",
+						},
+					});
 				});
-				resolve(response);
-			});
 		});
 	}
 

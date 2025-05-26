@@ -28,36 +28,42 @@ gameServer.handle("session:create", async (data, socket) => {
 	gameServer.broadcastToSession(session.sessionId, "session:user-joined", user);
 
 	return {
-		user,
-		session,
+		data: {
+			user,
+			session,
+		},
+		success: true,
 	};
 });
 
+// Using the refactored TriviaGameServer
 gameServer.handle("session:join", async (data, socket) => {
 	const user: User = {
 		username: data.username,
 		score: 0,
 	};
-
 	const session = gameServer.sessions.get(data.sessionId);
-
 	gameServer.logSocketData("joinRoom", socket.data);
 
 	if (!session) {
-		gameServer.emit(socket, "session:join-failed", {
-			reason: "session_not_found",
-			message: "The requested session could not be found",
-			sessionId: data.sessionId,
-		});
-		throw new Error("session_not_found");
+		// No need to manually emit failure events anymore - the server handles this automatically
+		return {
+			success: false,
+			error: {
+				reason: "session_not_found",
+				message: "Session not found. Please check the code and try again.",
+			},
+		};
 	}
 
 	if (session.users.find((u) => u.username === user.username)) {
-		gameServer.emit(socket, "session:join-failed", {
-			reason: "username_taken",
-			message: "Username is already taken by somebody else",
-		});
-		throw new Error("username_taken");
+		return {
+			success: false,
+			error: {
+				reason: "username_taken",
+				message: "Username already taken. Please choose another one.",
+			},
+		};
 	}
 
 	session.users.push(user);
@@ -65,15 +71,16 @@ gameServer.handle("session:join", async (data, socket) => {
 		user,
 		session,
 	});
-
 	socket.join(data.sessionId);
 	gameServer.logSocketData("joinRoom", socket.data);
-
 	gameServer.broadcastToSession(data.sessionId, "session:user-joined", user);
 
 	return {
-		user,
-		session,
+		success: true,
+		data: {
+			user,
+			session,
+		},
 	};
 });
 
@@ -81,19 +88,23 @@ gameServer.handle("session:leave", async (data, socket) => {
 	const session = gameServer.sessions.get(data.sessionId);
 
 	if (!session) {
-		gameServer.emit(socket, "session:leave-failed", {
-			reason: "session_not_found",
-			message: "No Such Session Exists",
-		});
-		throw new Error("session_not_found");
+		return {
+			success: false,
+			error: {
+				reason: "session_not_found",
+				message: "No Such Session Exists",
+			},
+		};
 	}
 
 	if (!data.username) {
-		gameServer.emit(socket, "session:leave-failed", {
-			reason: "user_not_found",
-			message: "User not found.",
-		});
-		throw new Error("user_not_found");
+		return {
+			success: false,
+			error: {
+				reason: "user_not_found",
+				message: "User not found.",
+			},
+		};
 	}
 
 	gameServer.logSocketData("leaveRoom", socket.data);
@@ -110,7 +121,10 @@ gameServer.handle("session:leave", async (data, socket) => {
 		gameServer.sessions.delete(data.sessionId);
 		gameServer.setSocketData(socket, {});
 
-		return data;
+		return {
+			success: true,
+			data: data,
+		};
 	}
 
 	// If non-host is leaving
@@ -126,5 +140,8 @@ gameServer.handle("session:leave", async (data, socket) => {
 	}
 
 	gameServer.setSocketData(socket, {});
-	return data;
+	return {
+		success: true,
+		data: data,
+	};
 });
