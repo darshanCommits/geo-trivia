@@ -1,5 +1,8 @@
-import { fetchQuestions } from "@backend/services/question.service";
-import type { QuestionType } from "@shared/types";
+import {
+	fetchMockQuestions,
+	fetchQuestions,
+} from "@backend/services/question.service";
+import type { Question } from "@shared/core.types";
 import type { Request, Response } from "express";
 
 type ErrorResponse = {
@@ -12,12 +15,12 @@ type QueryType = {
 };
 
 export async function initializeQuestions(
-	req: Request<any, QuestionType[], QueryType>,
-	res: Response<QuestionType[] | ErrorResponse>,
+	req: Request<any, Question[], QueryType>,
+	res: Response<Question[] | ErrorResponse>,
 ) {
 	const { city, queCount } = req.body;
 	try {
-		const questions = await fetchQuestions(city, queCount);
+		const questions = await fetchMockQuestions();
 
 		console.log(questions);
 		res.status(200).json(questions);

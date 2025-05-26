@@ -6,7 +6,7 @@ import type {
 	ClientToServerEvents,
 	ServerToClientEvents,
 } from "@shared/types";
-import type { GameSession, SocketData } from "@shared/core.types";
+import type { GameSession, Question, SocketData } from "@shared/core.types";
 import type {
 	ClientEvents,
 	ClientResponseWithError,
@@ -23,6 +23,7 @@ export class TriviaGameServer {
 		(socket: Socket<ClientToServerEvents, ServerToClientEvents>) => void
 	> = [];
 	public sessions = new Map<SessionId, GameSession>(); // sessionId -> users. using the type User["sessionId"] instead of string for explicitness.
+	public activeGameQuestions = new Map<SessionId, Question[]>();
 
 	constructor(server: HTTPServer) {
 		this.io = new SocketIOServer<

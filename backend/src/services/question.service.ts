@@ -1,6 +1,6 @@
-import type { Types } from "@shared/types";
 import { GoogleGenAI, type Schema, Type } from "@google/genai";
 import dotenv from "dotenv";
+import type { Question } from "@shared/core.types";
 
 dotenv.config();
 
@@ -64,7 +64,7 @@ const genAI = new GoogleGenAI({ apiKey: API_KEY });
 export async function fetchQuestions(
 	city: string,
 	queCount: number,
-): Promise<Types.QuestionType[]> {
+): Promise<Question[]> {
 	const contents = `Generate ${queCount} concise Geo-Political-Historical questions about ${city} with a maximum of 10 words per question and a maximum of 5 words per option.`;
 
 	const result = await genAI.models.generateContent({
@@ -87,7 +87,7 @@ export async function fetchQuestions(
 
 	try {
 		const parsed = JSON.parse(response);
-		return parsed as Types.QuestionType[];
+		return parsed as Question[];
 	} catch (err) {
 		console.error("Failed to parse questions:", err);
 		console.error("Raw response:", response);
@@ -95,7 +95,7 @@ export async function fetchQuestions(
 	}
 }
 
-export const fetchMockQuestions = async () => {
+export const fetchMockQuestions = async (): Promise<Question[]> => {
 	await new Promise((resolve) => setTimeout(resolve, 100));
 
 	return [
@@ -107,23 +107,21 @@ export const fetchMockQuestions = async () => {
 				"Mughal Empire",
 				"Gupta Dynasty",
 			],
-			question:
-				"Udaipur: Which Rajput clan founded it?Udaipur: Which Rajput clan founded it?",
+			text: "Udaipur: Which Rajput clan founded it?Udaipur: Which Rajput clan founded it?",
 			region: "Udaipur",
 			timeout: 15,
 		},
 		{
 			correctAnswer: 2,
 			options: ["Lake Pichola", "Fateh Sagar", "Lake Palace", "Lake Badi"],
-			question:
-				"Udaipur's Lake Palace: Which lake is it on?Udaipur's Lake Palace: Which lake is it on?",
+			text: "Udaipur's Lake Palace: Which lake is it on?Udaipur's Lake Palace: Which lake is it on?",
 			region: "Udaipur",
 			timeout: 15,
 		},
 		{
 			correctAnswer: 1,
 			options: ["1559", "1568", "1576", "1585"],
-			question: "Udaipur: When did the Mughals attack?",
+			text: "Udaipur: When did the Mughals attack?",
 			region: "Udaipur",
 			timeout: 15,
 		},
@@ -136,21 +134,21 @@ export const fetchMockQuestions = async () => {
 				"Mughal Empire",
 				"Gupta Dynasty",
 			],
-			question: "Udaipur: Which Rajput clan founded it?",
+			text: "Udaipur: Which Rajput clan founded it?",
 			region: "Udaipur",
 			timeout: 15,
 		},
 		{
 			correctAnswer: 2,
 			options: ["Lake Pichola", "Fateh Sagar", "Lake Palace", "Lake Badi"],
-			question: "Udaipur's Lake Palace: Which lake is it on?",
+			text: "Udaipur's Lake Palace: Which lake is it on?",
 			region: "Udaipur",
 			timeout: 15,
 		},
 		{
 			correctAnswer: 1,
 			options: ["1559", "1568", "1576", "1585"],
-			question: "Udaipur: When did the Mughals attack?",
+			text: "Udaipur: When did the Mughals attack?",
 			region: "Udaipur",
 			timeout: 15,
 		},
@@ -163,21 +161,21 @@ export const fetchMockQuestions = async () => {
 				"Mughal Empire",
 				"Gupta Dynasty",
 			],
-			question: "Udaipur: Which Rajput clan founded it?",
+			text: "Udaipur: Which Rajput clan founded it?",
 			region: "Udaipur",
 			timeout: 15,
 		},
 		{
 			correctAnswer: 2,
 			options: ["Lake Pichola", "Fateh Sagar", "Lake Palace", "Lake Badi"],
-			question: "Udaipur's Lake Palace: Which lake is it on?",
+			text: "Udaipur's Lake Palace: Which lake is it on?",
 			region: "Udaipur",
 			timeout: 15,
 		},
 		{
 			correctAnswer: 1,
 			options: ["1559", "1568", "1576", "1585"],
-			question: "Udaipur: When did the Mughals attack?",
+			text: "Udaipur: When did the Mughals attack?",
 			region: "Udaipur",
 			timeout: 15,
 		},
@@ -190,21 +188,21 @@ export const fetchMockQuestions = async () => {
 				"Mughal Empire",
 				"Gupta Dynasty",
 			],
-			question: "Udaipur: Which Rajput clan founded it?",
+			text: "Udaipur: Which Rajput clan founded it?",
 			region: "Udaipur",
 			timeout: 15,
 		},
 		{
 			correctAnswer: 2,
 			options: ["Lake Pichola", "Fateh Sagar", "Lake Palace", "Lake Badi"],
-			question: "Udaipur's Lake Palace: Which lake is it on?",
+			text: "Udaipur's Lake Palace: Which lake is it on?",
 			region: "Udaipur",
 			timeout: 15,
 		},
 		{
 			correctAnswer: 1,
 			options: ["1559", "1568", "1576", "1585"],
-			question: "Udaipur: When did the Mughals attack?",
+			text: "Udaipur: When did the Mughals attack?",
 			region: "Udaipur",
 			timeout: 15,
 		},
@@ -217,21 +215,21 @@ export const fetchMockQuestions = async () => {
 				"Mughal Empire",
 				"Gupta Dynasty",
 			],
-			question: "Udaipur: Which Rajput clan founded it?",
+			text: "Udaipur: Which Rajput clan founded it?",
 			region: "Udaipur",
 			timeout: 15,
 		},
 		{
 			correctAnswer: 2,
 			options: ["Lake Pichola", "Fateh Sagar", "Lake Palace", "Lake Badi"],
-			question: "Udaipur's Lake Palace: Which lake is it on?",
+			text: "Udaipur's Lake Palace: Which lake is it on?",
 			region: "Udaipur",
 			timeout: 15,
 		},
 		{
 			correctAnswer: 1,
 			options: ["1559", "1568", "1576", "1585"],
-			question: "Udaipur: When did the Mughals attack?",
+			text: "Udaipur: When did the Mughals attack?",
 			region: "Udaipur",
 			timeout: 15,
 		},
