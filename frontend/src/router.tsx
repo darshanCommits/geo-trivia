@@ -8,8 +8,7 @@ import {
 import Home from "@/pages/home";
 import GamePage from "@/pages/game";
 import LeaderBoard from "@/pages/leaderboard";
-import Session from "@/pages/Session";
-import ShareSession from "@/components/ShareSession";
+
 import SessionPage from "./pages/session-new";
 import GameLobby from "./pages/gamelobby";
 

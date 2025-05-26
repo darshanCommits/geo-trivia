@@ -41,15 +41,15 @@ export default function GameLobby() {
 		await leaveSession();
 	};
 
-	if (!session || !user) {
-		return (
-			<div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
-				<div className="w-full max-w-md bg-white/95 backdrop-blur-sm p-6 text-center rounded-lg shadow">
-					<p className="text-gray-600">No active session found</p>
-				</div>
-			</div>
-		);
-	}
+	// if (!session || !user) {
+	// 	return (
+	// 		<div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
+	// 			<div className="w-full max-w-md bg-white/95 backdrop-blur-sm p-6 text-center rounded-lg shadow">
+	// 				<p className="text-gray-600">No active session found</p>
+	// 			</div>
+	// 		</div>
+	// 	);
+	// }
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">

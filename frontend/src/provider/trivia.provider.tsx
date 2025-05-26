@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useRef } from "react";
 import { TriviaGameClient } from "@/classes/TriviaGameClient";
 import { useTriviaStore } from "@/stores/game.store";
-import type { User } from "@shared/types";
+import type { GameSession, User } from "@shared/types";
 
 // Context just provides client and actions
 interface TriviaGameContextValue {
@@ -9,7 +9,7 @@ interface TriviaGameContextValue {
 
 	// Actions that interact with the server
 	createSession: (username: string) => Promise<void>;
-	joinSession: (user: User) => Promise<void>;
+	joinSession: (username: string, sessionId: string) => Promise<void>; // Fixed signature
 	leaveSession: () => Promise<void>;
 	startGame: () => Promise<void>;
 	submitAnswer: (
@@ -143,18 +143,21 @@ export function TriviaGameProvider({
 		}
 	};
 
-	const joinSession = async (user: User) => {
+	// Fixed joinSession function
+	const joinSession = async (username: string, sessionId: string) => {
 		if (!clientRef.current) return;
 
 		setLoading(true);
 		setError(null);
 
 		try {
-			const result = await clientRef.current.joinSession(user);
+			const result = await clientRef.current.joinSession(username, sessionId);
 			if ("error" in result) {
 				setError(result.error);
 			} else {
-				setUser(result);
+				// Server returns { user, session }
+				setUser(result.user);
+				setSession(result.session);
 			}
 		} catch (error) {
 			setError("Failed to join session");

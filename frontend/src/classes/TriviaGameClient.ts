@@ -141,11 +141,15 @@ export class TriviaGameClient {
 		return result;
 	}
 
-	async joinSession(user: User): Promise<ClientResponse<"session:join">> {
-		const result = await this.request("session:join", user);
+	// Fixed joinSession method - takes username and sessionId
+	async joinSession(
+		username: string,
+		sessionId: string,
+	): Promise<ClientResponse<"session:join">> {
+		const result = await this.request("session:join", { username, sessionId });
 
 		if (!this.isError(result)) {
-			this.currentUser = result;
+			this.currentUser = result.user;
 			// Room joining is handled automatically on the server side
 		}
 

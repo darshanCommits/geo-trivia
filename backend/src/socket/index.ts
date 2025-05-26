@@ -65,6 +65,7 @@ gameServer.handle("session:join", async (data, socket) => {
 	gameServer.logSocketData("joinRoom", socket.data);
 
 	gameServer.broadcastToSession(user.sessionId, "session:user-joined", user);
+	console.log("join par ye send kr rha hu", { user, session });
 
 	return {
 		user,
