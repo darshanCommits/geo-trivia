@@ -63,7 +63,7 @@ export type ClientEvents = {
 	};
 
 	"game:answer": {
-		request: { username: string; answer: Answer };
+		request: { sessionId: string; username: string; answer: Answer };
 		response: { correct: boolean; user: User }; // client gets back full User object with updated score
 	};
 

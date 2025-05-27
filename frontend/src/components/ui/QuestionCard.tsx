@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { accentColors } from "@/lib/colors";
-import type { Question } from "@shared/core.types";
+import type { TriviaState } from "@/stores/game.store.types";
 import { useEffect, useState } from "react";
 
 const rotationClass = (index: number) => {
@@ -55,7 +55,7 @@ export const QuestionCard = ({
 	className,
 }: {
 	onAnswer: (answer: number) => void;
-	questionData: Question;
+	questionData: TriviaState["question"];
 	currentQuestionIndex: number;
 	className?: string;
 }) => {

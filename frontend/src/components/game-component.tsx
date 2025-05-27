@@ -2,7 +2,7 @@ import { QuestionCard } from "@/components/ui/QuestionCard";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import Title from "@/components/ui/title-header";
-import type { Question } from "@shared/core.types";
+import type { TriviaState } from "@/stores/game.store.types";
 
 GameComponent.defaultProps = {
 	total: 15,
@@ -13,7 +13,7 @@ export default function GameComponent(props: {
 	totalQuestions: number;
 	currentQuestionIndex: number;
 	onAnswer: (answer: number) => void;
-	questionData: Question;
+	questionData: TriviaState["question"];
 	score: number;
 }) {
 	return (

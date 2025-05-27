@@ -1,45 +1,48 @@
-import { useState } from "react";
 import { useTriviaClient } from "@/provider/trivia.provider";
-import { useTriviaStore } from "@/stores/game.store";
-import type { ClientResponseWithError } from "@shared/events.types";
+import type { ClientEvents } from "@shared/events.types";
 
-export function useNextQuestion() {
+type RequestNextQuestionParams = ClientEvents["game:question-next"]["request"];
+
+export function useRequestNextQuestion() {
 	const client = useTriviaClient();
-	const addQuestion = useTriviaStore((s) => s.addQuestion); // assuming you have this action to store questions in client state
-	const [error, setError] = useState<string | null>(null);
-	const [isLoading, setIsLoading] = useState(false);
 
-	const fetchNextQuestion = async (
-		sessionId: string,
-		currentQuestionNumber: number,
-	): Promise<boolean> => {
-		setError(null);
-		setIsLoading(true);
-
+	const requestNextQuestion = async ({
+		sessionId,
+		currentQuestionNumber,
+	}: RequestNextQuestionParams) => {
 		try {
-			const response: ClientResponseWithError<"game:question-next"> =
-				await client.request("game:question-next", {
-					sessionId,
-					currentQuestionNumber,
-				});
+			const res = await client.request("game:question-next", {
+				sessionId,
+				currentQuestionNumber,
+			});
 
-			if (response.success) {
-				addQuestion(response.data.question, response.data.questionNumber);
-				setIsLoading(false);
-				return true;
+			if (!res || !res.success) {
+				console.error("Failed to request next question:", res?.error);
+				return {
+					success: false,
+					error: res?.error ?? {
+						reason: "unknown_error",
+						message: "No response or unexpected failure.",
+					},
+				};
 			}
 
-			setError(response.error?.message ?? "Failed to fetch question");
-			setIsLoading(false);
-			return false;
+			// Optionally return the data if needed by the caller
+			return {
+				success: true,
+				data: res.data,
+			};
 		} catch (err) {
-			setError("Network error occurred");
-			setIsLoading(false);
-			return false;
+			console.error("Socket error during next question request:", err);
+			return {
+				success: false,
+				error: {
+					reason: "socket_exception",
+					message: "Failed to send request due to socket error.",
+				},
+			};
 		}
 	};
 
-	const clearError = () => setError(null);
-
-	return { fetchNextQuestion, error, isLoading, clearError };
+	return { requestNextQuestion };
 }

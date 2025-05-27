@@ -33,7 +33,7 @@ export type Question = {
 };
 
 export type Answer = {
-	questionId: string;
+	questionNumber: number;
 	selectedOption: number;
 	timeRemaining: number;
 };

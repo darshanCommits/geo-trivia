@@ -231,7 +231,7 @@ gameServer.handle("game:start", async (data, socket) => {
 	};
 });
 
-gameServer.handle("game:question-next", async (data, socket) => {
+gameServer.handle("game:question-next", async (data, _socket) => {
 	const { sessionId, currentQuestionNumber } = data;
 	const session = gameServer.sessions.get(sessionId);
 
@@ -258,7 +258,7 @@ gameServer.handle("game:question-next", async (data, socket) => {
 		};
 	}
 
-	const question = questions[currentQuestionNumber - 1];
+	const question = questions[currentQuestionNumber];
 	if (!question) {
 		return {
 			success: false,
@@ -269,13 +269,11 @@ gameServer.handle("game:question-next", async (data, socket) => {
 		};
 	}
 
-	const questionToSend = { ...question };
+	const { correctAnswer, ...questionToSend } = question;
 
-	// You can broadcast or return to caller based on game flow
-	gameServer.broadcastToSession(sessionId, "game:question-next", {
+	gameServer.broadcastToSession(sessionId, "game:question-recieved", {
 		question: questionToSend,
 		questionNumber: currentQuestionNumber,
-		totalQuestions,
 	});
 
 	return {
@@ -283,6 +281,74 @@ gameServer.handle("game:question-next", async (data, socket) => {
 		data: {
 			question: questionToSend,
 			questionNumber: currentQuestionNumber,
+		},
+	};
+});
+
+gameServer.handle("game:answer", async (data, _socket) => {
+	const { sessionId, username, answer } = data;
+	const { questionNumber, selectedOption, timeRemaining } = answer;
+
+	// Find the session the user belongs to
+	const session = gameServer.sessions.get(sessionId);
+	if (!session || session.status !== "active") {
+		return {
+			success: false,
+			error: {
+				reason: "session_not_found",
+				message: "Session is not active or does not exist.",
+			},
+		};
+	}
+
+	const questions = gameServer.activeGameQuestions.get(sessionId);
+	if (!questions) {
+		return {
+			success: false,
+			error: {
+				reason: "no_questions",
+				message: "No questions found for the session.",
+			},
+		};
+	}
+
+	const question = questions[questionNumber];
+	if (!question) {
+		return {
+			success: false,
+			error: {
+				reason: "question_not_found",
+				message: "Question not found.",
+			},
+		};
+	}
+
+	const isCorrect = question.correctAnswer === selectedOption;
+
+	const user = session.users.find((u) => u.username === username);
+	if (!user) {
+		return {
+			success: false,
+			error: {
+				reason: "user_not_found",
+				message: "User not found in session.",
+			},
+		};
+	}
+
+	// Scoring logic (example: +10 points if correct, bonus for fast answers)
+	if (isCorrect) {
+		const baseScore = 10;
+		const bonus = Math.floor(timeRemaining / 2); // example: 0.5 point per second left
+		user.score += baseScore + bonus;
+	}
+
+	// Return updated user and correctness
+	return {
+		success: true,
+		data: {
+			correct: isCorrect,
+			user,
 		},
 	};
 });

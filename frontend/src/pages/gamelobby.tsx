@@ -8,15 +8,18 @@ import { Badge } from "@/components/ui/badge";
 import { useUserJoinedListener } from "@/hooks/listeners/on.session:user-joined";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useStartGame } from "@/hooks/ws/on.game:start";
+import { LoadingPage } from "./loading";
 
 export default function GameLobby() {
 	useUserJoinedListener();
+	const { startGame, isLoading } = useStartGame();
 	const user = useTriviaStore((state) => state.user);
 	const session = useTriviaStore((state) => state.session);
+	const sessionId = useTriviaStore((state) => state.session?.sessionId);
 
 	const [copied, setCopied] = useState(false);
 	const [region, setRegion] = useState("");
-	const [gameStarted, setGameStarted] = useState(false);
 
 	const handleCopySessionId = async () => {
 		if (session) {
@@ -29,6 +32,10 @@ export default function GameLobby() {
 			}
 		}
 	};
+
+	if (isLoading) {
+		return <LoadingPage />;
+	}
 
 	if (!session || !user) {
 		return (
@@ -71,7 +78,9 @@ export default function GameLobby() {
 							/>
 						</div>
 
-						<Button onClick={() => setGameStarted(true)}>Start Game</Button>
+						<Button onClick={() => startGame(sessionId, region)}>
+							Start Game
+						</Button>
 					</div>
 				</div>
 			</div>
