@@ -136,10 +136,9 @@ export type ServerEvents = GameEvents &
 
 // Server-to-Client Events (broadcasts)
 export type GameEvents = GameErrorEvents & {
-	"game:question-next": {
+	"game:question-recieved": {
 		question: Omit<Question, "correctAnswer">;
 		questionNumber: number;
-		totalQuestions: number;
 	};
 
 	"game:question-end": {

@@ -1,13 +1,14 @@
 import { create, type StateCreator } from "zustand";
-import type { TriviaStore } from "./game.store.types";
+import type { TriviaState, TriviaStore } from "./game.store.types";
 import type { GameSession } from "@shared/core.types";
 
-const defaults = {
+const defaults: TriviaState = {
 	user: null,
 	session: null,
-	currentQuestion: null,
+	question: null,
 	error: null,
 	loading: false,
+	questionNumber: 0,
 };
 
 export function withLogging<T extends object>(
@@ -34,7 +35,7 @@ export const useTriviaStore = create<TriviaStore>(
 			set({
 				user: null,
 				session: null,
-				currentQuestion: null,
+				question: null,
 				error: null,
 				loading: false,
 			}),
@@ -45,11 +46,28 @@ export const useTriviaStore = create<TriviaStore>(
 				gameStatus: status,
 			})),
 
+		setQuestion: (q) => {
+			const { session } = get();
+			if (!session) return;
+
+			set(() => ({
+				question: q,
+			}));
+		},
+
 		setTotalQuestions: (count: number) =>
 			set((state) => ({
 				...state,
 				totalQuestions: count,
 			})),
+
+		setQuestionNumber: (queNo) =>
+			set((state) => {
+				return {
+					...state,
+					questionNumber: queNo,
+				};
+			}),
 
 		addUser: (newUser) => {
 			const { session } = get();
