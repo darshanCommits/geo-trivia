@@ -10,11 +10,11 @@ export const geminiConfig = (count: number): Schema => {
 		maxItems: `${count}`,
 		minItems: `${count}`,
 		items: {
-			required: ["question", "options", "correctAnswer", "timeout", "region"],
+			required: ["text", "options", "correctAnswer", "timeout", "region"],
 			description: "Question Schema for geopolitical and historical quizzes.",
 			type: Type.OBJECT,
 			properties: {
-				question: {
+				text: {
 					type: Type.STRING,
 					maxLength: "100",
 					description:
