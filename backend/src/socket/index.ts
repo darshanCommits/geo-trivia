@@ -1,4 +1,9 @@
-import type { GameSession, Question, User } from "@shared/core.types";
+import type {
+	GameSession,
+	Leaderboard,
+	Question,
+	User,
+} from "@shared/core.types";
 import { server } from "../http.server";
 import { TriviaGameServer } from "./TriviaGameServer";
 import { generateSessionId } from "@backend/utils/lib";
@@ -6,6 +11,7 @@ import {
 	fetchMockQuestions,
 	fetchQuestions,
 } from "@backend/services/question.service";
+import type { ClientResponseWithError } from "@shared/events.types";
 
 export const gameServer = new TriviaGameServer(server);
 
@@ -192,6 +198,7 @@ gameServer.handle("game:start", async (data, socket) => {
 			},
 		};
 	}
+	// comment this while debugging
 	// if (session.users.length < 2) {
 	// 	return {
 	// 		success: false,
@@ -246,125 +253,126 @@ gameServer.handle("game:start", async (data, socket) => {
 });
 
 // gameServer.handle("game:question-next", async (data, _socket) => {
-gameServer.handle("game:question-next", async (data, _socket) => {
-	const { sessionId } = data;
-	const session = gameServer.sessions.get(sessionId);
+gameServer.handle(
+	"game:question-next",
+	async (
+		data,
+		_socket,
+	): Promise<ClientResponseWithError<"game:question-next">> => {
+		const { sessionId } = data;
+		const session = gameServer.sessions.get(sessionId);
 
-	if (!session) {
-		console.error(`Session not found: ${sessionId}`);
-		return {
-			success: false,
-			error: {
-				reason: "session_not_found",
-				message: "Session does not exist.",
-			},
-		};
-	}
+		if (!session) {
+			console.error(`Session not found: ${sessionId}`);
+			return {
+				success: false,
+				error: {
+					reason: "session_not_found",
+					message: "Session does not exist.",
+				},
+			};
+		}
 
-	if (session.status !== "active") {
-		console.error(
-			`Session ${sessionId} is not active. Status: ${session.status}`,
-		);
-		return {
-			success: false,
-			error: {
-				reason: "session_not_active",
-				message: `Session is not active. Current status: ${session.status}`,
-			},
-		};
-	}
+		if (session.status !== "active") {
+			console.error(
+				`Session ${sessionId} is not active. Status: ${session.status}`,
+			);
+			return {
+				success: false,
+				error: {
+					reason: "session_not_active",
+					message: `Session is not active. Current status: ${session.status}`,
+				},
+			};
+		}
 
-	// Enforce event order
-	if (session.eventLockState !== "CAN_REQUEST_QUESTION") {
-		console.error(
-			`Invalid event order for session ${sessionId}: Tried game:question-next when ${session.eventLockState} was expected.`,
-		);
-		return {
-			success: false,
-			error: {
-				reason: "invalid_event_order",
-				message:
-					"Cannot request a new question at this time. Awaiting an answer or game is in an invalid state.",
-			},
-		};
-	}
+		// Enforce event order
+		if (session.eventLockState !== "CAN_REQUEST_QUESTION") {
+			console.error(
+				`Invalid event order for session ${sessionId}: Tried game:question-next when ${session.eventLockState} was expected.`,
+			);
+			return {
+				success: false,
+				error: {
+					reason: "invalid_event_order",
+					message:
+						"Cannot request a new question at this time. Awaiting an answer or game is in an invalid state.",
+				},
+			};
+		}
 
-	// Initialize or retrieve the question index from session state
-	// currentQuestionNumber should already be initialized to 0 when session starts
-	if (typeof session.currentQuestionNumber !== "number") {
-		session.currentQuestionNumber = 0; // Fallback, but should be set at session creation
-	}
+		// Initialize or retrieve the question index from session state
+		// currentQuestionNumber should already be initialized to 0 when session starts
+		if (typeof session.currentQuestionNumber !== "number") {
+			session.currentQuestionNumber = 0; // Fallback, but should be set at session creation
+		}
 
-	const idx = session.currentQuestionNumber;
-	const questions = gameServer.activeGameQuestions.get(sessionId) || [];
-	const totalQuestions = questions.length;
+		const idx = session.currentQuestionNumber;
+		const questions = gameServer.activeGameQuestions.get(sessionId) || [];
+		const totalQuestions = questions.length;
 
-	if (idx >= totalQuestions) {
-		console.log(`Session ${sessionId} has reached the end of questions.`);
-		session.status = "finished"; // Mark session as completed
+		if (idx >= totalQuestions) {
+			console.log(`Session ${sessionId} has reached the end of questions.`);
+			session.status = "finished"; // Mark session as completed
+			// gameServer.sessions.set(sessionId, session); // Ensure map is updated if session objects are not references
+			//
+
+			const leaderboard: Leaderboard = session.users
+				.sort((a, b) => b.score - a.score)
+				.map((user, index) => ({
+					...user,
+					rank: index + 1,
+				}));
+			// Optionally, broadcast a game over event
+			gameServer.broadcastToSession(sessionId, "game:finished", {
+				leaderboard,
+				status: "finished",
+			});
+
+			return {
+				success: true,
+				data: {
+					question: null,
+					questionNumber: idx,
+					status: "finished",
+				},
+			};
+		}
+
+		// should never happen
+		if (idx < 0) {
+			console.error(`Invalid question index ${idx} for session ${sessionId}`);
+			return {
+				success: false,
+				error: {
+					reason: "invalid_question_number",
+					message: `Invalid question number: ${idx}.`,
+				},
+			};
+		}
+
+		const { correctAnswer, ...questionToSend } = questions[idx];
+
+		gameServer.broadcastToSession(sessionId, "game:question-recieved", {
+			question: questionToSend,
+			questionNumber: idx,
+		});
+
+		session.eventLockState = "CAN_SUBMIT_ANSWER";
+		session.currentQuestionNumber = idx + 1;
+
 		// gameServer.sessions.set(sessionId, session); // Ensure map is updated if session objects are not references
 
-		// Optionally, broadcast a game over event
-		// gameServer.broadcastToSession(sessionId, "game:over", {
-		// 	message: "All questions answered. The game has ended.",
-		// 	// You might want to include final scores or other relevant info
-		// });
-
 		return {
-			success: false,
-			error: {
-				reason: "no_more_questions",
-				message: "There are no more questions in this game.",
+			success: true,
+			data: {
+				question: questionToSend,
+				questionNumber: idx, // Changed from currentQuestionNumber to idx for clarity
+				status: "active",
 			},
 		};
-	}
-
-	// Validate index bounds (idx < 0 is unlikely if logic is correct)
-	if (idx < 0 /* || idx >= totalQuestions - handled above */) {
-		console.error(`Invalid question index ${idx} for session ${sessionId}`);
-		return {
-			success: false,
-			error: {
-				reason: "invalid_question_number",
-				message: `Invalid question number: ${idx}.`,
-			},
-		};
-	}
-
-	const { correctAnswer, ...questionToSend } = questions[idx];
-
-	gameServer.broadcastToSession(sessionId, "game:question-recieved", {
-		question: questionToSend,
-		questionNumber: idx,
-
-		// totalQuestions: totalQuestions, // Good to send total questions too
-	});
-
-	// Update session state AFTER successful processing
-	session.eventLockState = "CAN_SUBMIT_ANSWER";
-	// session.currentQuestionNumber is already pointing to the question just sent (idx).
-	// It will be incremented after this question is answered, or rather,
-	// the *next* time game:question-next is called, it will use currentQuestionNumber,
-	// and then increment it.
-	// The original logic was: session.currentQuestionNumber = idx + 1;
-	// This means currentQuestionNumber stores the *index of the next question to be asked*.
-	// This is fine.
-
-	// No, looking at the original, `session.currentQuestionNumber` is incremented here.
-	// This means `session.currentQuestionNumber` holds the index of the *next* question.
-	session.currentQuestionNumber = idx + 1;
-
-	// gameServer.sessions.set(sessionId, session); // Ensure map is updated if session objects are not references
-
-	return {
-		success: true,
-		data: {
-			question: questionToSend,
-			questionNumber: idx, // Changed from currentQuestionNumber to idx for clarity
-			totalQuestions: totalQuestions,
-		},
-	};
-});
+	},
+);
 
 // gameServer.handle("game:answer", async (data, _socket) => {
 gameServer.handle("game:answer", async (data, _socket) => {
@@ -398,19 +406,19 @@ gameServer.handle("game:answer", async (data, _socket) => {
 	}
 
 	// Enforce event order
-	if (session.eventLockState !== "CAN_SUBMIT_ANSWER") {
-		console.error(
-			`Invalid event order for session ${sessionId}: Tried game:answer when ${session.eventLockState} was expected.`,
-		);
-		return {
-			success: false,
-			error: {
-				reason: "invalid_event_order",
-				message:
-					"Cannot submit an answer at this time. No question is currently pending an answer.",
-			},
-		};
-	}
+	// if (session.eventLockState !== "CAN_SUBMIT_ANSWER") {
+	// 	console.error(
+	// 		`Invalid event order for session ${sessionId}: Tried game:answer when ${session.eventLockState} was expected.`,
+	// 	);
+	// 	return {
+	// 		success: false,
+	// 		error: {
+	// 			reason: "invalid_event_order",
+	// 			message:
+	// 				"Cannot submit an answer at this time. No question is currently pending an answer.",
+	// 		},
+	// 	};
+	// }
 
 	const questions = gameServer.activeGameQuestions.get(sessionId);
 	if (!questions) {

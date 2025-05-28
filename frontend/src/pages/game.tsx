@@ -8,18 +8,23 @@ import { useTriviaStore } from "@/stores/game.store";
 import { useRequestNextQuestion } from "@/hooks/ws/on.game:next-question";
 import { useSubmitAnswer } from "@/hooks/ws/on.game:submit-answer";
 import { LoadingPage } from "./loading";
+import { useGameFinishedListener } from "@/hooks/listeners/on.game:finished";
 
 export default function GamePage() {
 	const { isLoading, subscribe } = useNextQueListener();
 	const { requestNextQuestion } = useRequestNextQuestion();
 	const { submitAnswer } = useSubmitAnswer();
+	useGameFinishedListener();
 
+	const setStatus = useTriviaStore((state) => state.setGameStatus);
 	const sessionId = useTriviaStore((s) => s.session?.sessionId);
 	const questionNumber = useTriviaStore((s) => s.questionNumber);
 	const totalQuestions = useTriviaStore((s) => s.session?.totalQuestions) || 15;
 	const currentQuestion = useTriviaStore((s) => s.question);
 	const gameStatus = useTriviaStore((s) => s.session?.status);
 	const navigate = useNavigate();
+
+	const endGameList = useTriviaStore((s) => s.leaderboard);
 
 	console.log("QUESTION NUMBER : ", questionNumber);
 	const [score, setScore] = useState(0);
@@ -60,7 +65,7 @@ export default function GamePage() {
 			}
 
 			// Last question? then go to leaderboard
-			if (questionNumber + 1 >= totalQuestions) {
+			if (questionNumber >= totalQuestions) {
 				navigate({ to: "/leaderboard" });
 				return;
 			}
@@ -82,21 +87,31 @@ export default function GamePage() {
 		],
 	);
 
-	// Show loading
+	if (gameStatus === "finished") {
+		console.log("Here is end game list");
+		console.log(endGameList);
+		if (!endGameList) {
+			throw new Error("Leaderboard is null. should not be");
+		}
+		navigate({ to: "/leaderboard" });
+		return null;
+	}
+
 	if (isLoading || !currentQuestion) {
+		console.warn("before loading");
+		console.table({
+			gameStatus,
+			endGameList,
+		});
 		return <LoadingPage />;
 	}
 
-	// Redirects
 	if (!sessionId) {
 		navigate({ to: "/" });
 		return null;
 	}
 
-	// if (gameStatus !== "active") {
-	// 	navigate({ to: "/leaderboard" });
-	// 	return null;
-	// }
+	// need tow work on this. need a hook that handles
 
 	return (
 		<div className="bg-emerald-300 pattern-background relative">

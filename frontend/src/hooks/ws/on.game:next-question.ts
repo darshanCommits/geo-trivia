@@ -9,6 +9,7 @@ export function useRequestNextQuestion() {
 	const setQuestionNumber = useTriviaStore((s) => s.setQuestionNumber);
 	const setQuestion = useTriviaStore((s) => s.setQuestion);
 
+	const setStatus = useTriviaStore((state) => state.setGameStatus);
 	const requestNextQuestion = async ({
 		sessionId,
 	}: RequestNextQuestionParams) => {
@@ -28,11 +29,12 @@ export function useRequestNextQuestion() {
 				};
 			}
 
-			const { question, questionNumber } = res.data;
+			const { question, questionNumber, status } = res.data;
 
 			// Update store
 			setQuestion(question);
 			setQuestionNumber(questionNumber);
+			setStatus(status);
 
 			return { success: true, data: res.data };
 			// Optionally return the data if needed by the caller

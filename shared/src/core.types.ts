@@ -40,8 +40,8 @@ export type Answer = {
 	timeRemaining: number;
 };
 
-export type Leaderboard = {
-	username: string;
-	score: number;
-	rank: number;
-}[];
+export type Leaderboard = Array<
+	User & {
+		rank: number;
+	}
+>;

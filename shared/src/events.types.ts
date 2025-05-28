@@ -57,8 +57,8 @@ export type ClientEvents = {
 		};
 		response: {
 			question: Omit<Question, "correctAnswer">;
-			currentQuestionNumber: number;
 			questionNumber: number;
+			status: GameSession["status"];
 		};
 	};
 
@@ -155,7 +155,7 @@ export type GameEvents = GameErrorEvents & {
 		leaderboard: Leaderboard;
 	};
 
-	"game:finished": Leaderboard;
+	"game:finished": { leaderboard: Leaderboard; status: GameSession["status"] };
 };
 
 type ErrorEventForClientEvent<K extends ClientEventName> =

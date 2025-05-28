@@ -1,6 +1,7 @@
 import { create, type StateCreator } from "zustand";
 import type { TriviaState, TriviaStore } from "./game.store.types";
 import type { GameSession } from "@shared/core.types";
+import LeaderBoard from "@/pages/leaderboard";
 
 const defaults: TriviaState = {
 	user: null,
@@ -40,11 +41,25 @@ export const useTriviaStore = create<TriviaStore>(
 				loading: false,
 			}),
 
-		setGameStatus: (status: GameSession["status"]) =>
+		setLeaderboard: (leaderboard) =>
 			set((state) => ({
 				...state,
-				gameStatus: status,
+				leaderboard: leaderboard,
 			})),
+
+		setGameStatus: (status: GameSession["status"]) =>
+			set((state) => {
+				if (!state.session) {
+					throw new Error("Session does not exist");
+				}
+				return {
+					...state,
+					session: {
+						...state.session,
+						status,
+					},
+				};
+			}),
 
 		setQuestion: (q) => {
 			const { session } = get();
