@@ -211,7 +211,7 @@ gameServer.handle("game:start", async (data, socket) => {
 	let questions: Question[] = [];
 	try {
 		// const response = await fetchQuestions(region, 10);
-		const response = await fetchMockQuestions();
+		const response = await fetchQuestions(region, 15);
 		questions = response;
 	} catch (err) {
 		console.error("Failed to fetch questions:", err);
