@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import SessionInfoCard from "@/components/SessionInfo";
 import PlayersList from "./PlayerList";
 import InstructionsCard from "./InstructionsCard";
@@ -10,14 +9,17 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useStartGame } from "@/hooks/ws/on.game:start";
 import { LoadingPage } from "./loading";
+import { useNavigate } from "@tanstack/react-router";
+import { useGameStartedListener } from "@/hooks/listeners/on.game:started";
 
 export default function GameLobby() {
 	useUserJoinedListener();
+	useGameStartedListener(); // This will handle navigation when game starts
+
 	const { startGame, isLoading } = useStartGame();
 	const user = useTriviaStore((state) => state.user);
 	const session = useTriviaStore((state) => state.session);
 	const sessionId = useTriviaStore((state) => state.session?.sessionId);
-
 	const [copied, setCopied] = useState(false);
 	const [region, setRegion] = useState("");
 
@@ -31,6 +33,14 @@ export default function GameLobby() {
 				console.error("Failed to copy session ID:", err);
 			}
 		}
+	};
+
+	const handleStartGame = async () => {
+		if (!sessionId) return;
+
+		// Only start the game - don't handle navigation here
+		// The useGameStartedListener will handle navigation for all clients
+		await startGame(sessionId, region);
 	};
 
 	if (isLoading) {
@@ -65,7 +75,6 @@ export default function GameLobby() {
 					<PlayersList session={session} currentUser={user} />
 					<div className="space-y-4">
 						<InstructionsCard />
-
 						<div>
 							<label className="block text-white mb-1" htmlFor="region-input">
 								Region
@@ -77,9 +86,8 @@ export default function GameLobby() {
 								onChange={(e) => setRegion(e.target.value)}
 							/>
 						</div>
-
-						<Button onClick={() => startGame(sessionId, region)}>
-							Start Game
+						<Button onClick={handleStartGame} disabled={isLoading}>
+							{isLoading ? "Starting..." : "Start Game"}
 						</Button>
 					</div>
 				</div>

@@ -35,6 +35,16 @@ export function SessionTabs({
 				</TabsTrigger>
 			</TabsList>
 
+			<TabsContent value="create" className="space-y-4 mt-6">
+				<SessionForm
+					mode="create"
+					username={username}
+					setUsername={setUsername}
+					handleSubmit={handleCreateSession}
+					loading={loading}
+				/>
+			</TabsContent>
+
 			<TabsContent value="join" className="space-y-4 mt-6">
 				<SessionForm
 					mode="join"
@@ -43,16 +53,6 @@ export function SessionTabs({
 					sessionId={sessionId}
 					setSessionId={setSessionId}
 					handleSubmit={handleJoinSession}
-					loading={loading}
-				/>
-			</TabsContent>
-
-			<TabsContent value="create" className="space-y-4 mt-6">
-				<SessionForm
-					mode="create"
-					username={username}
-					setUsername={setUsername}
-					handleSubmit={handleCreateSession}
 					loading={loading}
 				/>
 			</TabsContent>

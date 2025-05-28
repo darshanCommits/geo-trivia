@@ -12,12 +12,23 @@ export function useSubmitAnswer() {
 	}: {
 		answer: Answer;
 	}) => {
+		console.log("📤 submitting answer hook fired", {
+			answer,
+			sessionId,
+			username,
+		});
 		try {
 			const res = await client.request("game:answer", {
 				sessionId: sessionId,
 				username,
 				answer,
 			});
+
+			console.log("triggered game:answer from client");
+			console.log("here is output");
+			console.table(res);
+
+			console.log(res);
 
 			if (!res || !res.success) {
 				console.error("Failed to submit answer:", res?.error);

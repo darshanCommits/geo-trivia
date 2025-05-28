@@ -19,8 +19,10 @@ export type GameSession = {
 	users: User[];
 	status: "waiting" | "active" | "finished";
 	currentQuestion?: Question;
+	currentQuestionNumber: number;
 	maxPlayers?: number;
 	totalQuestions?: number;
+	eventLockState: "CAN_REQUEST_QUESTION" | "CAN_SUBMIT_ANSWER"; // Initial expected action
 };
 
 export type Question = {

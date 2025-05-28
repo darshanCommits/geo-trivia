@@ -68,7 +68,7 @@ export class TriviaGameClient {
 
 		return new Promise((resolve) => {
 			this._socket
-				.timeout(5000)
+				.timeout(50000)
 				.emit(type, payload, (err: Error | null, response: any) => {
 					this.logRequest({
 						direction: "response",

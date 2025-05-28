@@ -54,10 +54,10 @@ export type ClientEvents = {
 	"game:question-next": {
 		request: {
 			sessionId: string;
-			currentQuestionNumber: number;
 		};
 		response: {
 			question: Omit<Question, "correctAnswer">;
+			currentQuestionNumber: number;
 			questionNumber: number;
 		};
 	};
@@ -136,6 +136,14 @@ export type ServerEvents = GameEvents &
 
 // Server-to-Client Events (broadcasts)
 export type GameEvents = GameErrorEvents & {
+	"game:started": {
+		sessionId: string;
+		status: "active";
+		totalQuestions: number;
+		region: string;
+		timestamp: string;
+	};
+
 	"game:question-recieved": {
 		question: Omit<Question, "correctAnswer">;
 		questionNumber: number;

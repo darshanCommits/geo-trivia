@@ -22,6 +22,8 @@ export function useStartGame() {
 				region,
 			});
 
+			console.log(response);
+
 			if (response.success) {
 				setGameStatus(response.data.status);
 				setTotalQuestions(response.data.totalQuestions);

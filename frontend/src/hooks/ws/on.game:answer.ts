@@ -6,11 +6,11 @@ import type { Answer } from "@shared/core.types";
 export function useSubmitAnswer() {
 	const client = useTriviaClient();
 	const sessionId = useTriviaStore((s) => s.session?.sessionId);
+	const username = useTriviaStore((s) => s.user?.username);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 
 	const submitAnswer = async ({
-		username,
 		answer,
 	}: {
 		username: string;
@@ -20,7 +20,7 @@ export function useSubmitAnswer() {
 		setIsLoading(true);
 
 		try {
-			if (!sessionId) {
+			if (!sessionId || !username) {
 				return;
 			}
 
